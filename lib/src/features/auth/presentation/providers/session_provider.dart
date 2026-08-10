@@ -85,7 +85,7 @@ class SessionNotifier
   // LOGIN
   // ============================================================
 
-  Future<bool> login({
+  Future<String?> login({
     required String email,
     required String password,
   }) async {
@@ -102,7 +102,7 @@ class SessionNotifier
         state =
         const SessionState.unauthenticated();
 
-        return false;
+        return failure.message;
       },
           (session) {
         state =
@@ -110,7 +110,7 @@ class SessionNotifier
               session,
             );
 
-        return true;
+        return null;
       },
     );
   }
@@ -119,9 +119,8 @@ class SessionNotifier
   // SIGN UP
   // ============================================================
 
-  Future<bool> signUp({
+  Future<String?> signUp({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,
@@ -131,7 +130,6 @@ class SessionNotifier
     final result =
     await _authRepository.signup(
       companyName: companyName,
-      tenantSlug: tenantSlug,
       ownerEmail: ownerEmail,
       ownerPassword: ownerPassword,
       ownerDisplayName: ownerDisplayName,
@@ -142,7 +140,7 @@ class SessionNotifier
         state =
         const SessionState.unauthenticated();
 
-        return false;
+        return failure.message;
       },
           (session) {
         state =
@@ -150,7 +148,7 @@ class SessionNotifier
               session,
             );
 
-        return true;
+        return null;
       },
     );
   }

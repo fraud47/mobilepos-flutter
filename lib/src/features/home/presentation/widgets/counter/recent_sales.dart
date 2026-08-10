@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobilepos/src/features/reciepts/presentation/providers/reciept_provider.dart';
 
-class RecentSalesSection extends StatelessWidget {
+class RecentSalesSection extends ConsumerWidget {
   const RecentSalesSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final receiptsAsync = ref.watch(receiptProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,22 +30,44 @@ class RecentSalesSection extends StatelessWidget {
           ],
         ),
         SizedBox(height: 12.h),
-        const _SaleTile(
-          invoice: '#INV-001',
-          amount: r'$125',
-          time: '2 min ago',
-        ),
-        SizedBox(height: 10.h),
-        const _SaleTile(
-          invoice: '#INV-002',
-          amount: r'$84',
-          time: '12 min ago',
-        ),
-        SizedBox(height: 10.h),
-        const _SaleTile(
-          invoice: '#INV-003',
-          amount: r'$57',
-          time: '30 min ago',
+        receiptsAsync.when(
+          data: (receipts) {
+            if (receipts.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No recent sales'),
+              );
+            }
+            
+            // Sort by date descending and take top 3
+            final sorted = [...receipts]..sort((a, b) => b.date.compareTo(a.date));
+            final recent = sorted.take(3).toList();
+
+            return Column(
+              children: recent.map((receipt) {
+                final difference = DateTime.now().difference(receipt.date);
+                String timeAgo = '';
+                if (difference.inDays > 0) {
+                  timeAgo = '${difference.inDays} days ago';
+                } else if (difference.inHours > 0) {
+                  timeAgo = '${difference.inHours} hours ago';
+                } else {
+                  timeAgo = '${difference.inMinutes} min ago';
+                }
+
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 10.h),
+                  child: _SaleTile(
+                    invoice: '#${receipt.id}',
+                    amount: '\$${receipt.amount.toStringAsFixed(2)}',
+                    time: timeAgo,
+                  ),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(child: Text('Error: $error')),
         ),
       ],
     );

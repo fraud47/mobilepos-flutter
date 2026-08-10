@@ -20,12 +20,14 @@ class AppLogger {
 
   static void _log(String message, {String name = '', Object? error, StackTrace? stackTrace}) {
     if (kDebugMode) {
-      developer.log(
-        message,
-        name: name,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      final logMessage = name.isNotEmpty ? '[$name] $message' : message;
+      debugPrint(logMessage);
+      if (error != null) {
+        debugPrint('ERROR DETAILS: $error');
+      }
+      if (stackTrace != null) {
+        debugPrint('STACKTRACE:\n$stackTrace');
+      }
     }
   }
 }

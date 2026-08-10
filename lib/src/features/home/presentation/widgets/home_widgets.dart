@@ -15,7 +15,6 @@ export 'home_tab_body.dart';
 export 'inventory_header.dart';
 export 'inventory_health_card.dart';
 export 'inventory_metric_tile.dart';
-export 'items_view.dart';
 export 'new_sale_card.dart';
 export 'placeholder_tab.dart';
 export 'product_tile.dart';

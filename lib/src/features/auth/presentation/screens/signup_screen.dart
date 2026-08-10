@@ -20,9 +20,6 @@ class _SignupScreenState
   final _companyNameController =
   TextEditingController();
 
-  final _tenantSlugController =
-  TextEditingController();
-
   final _ownerDisplayNameController =
   TextEditingController();
 
@@ -46,7 +43,6 @@ class _SignupScreenState
   @override
   void dispose() {
     _companyNameController.dispose();
-    _tenantSlugController.dispose();
     _ownerDisplayNameController.dispose();
     _ownerEmailController.dispose();
     _ownerPasswordController.dispose();
@@ -69,13 +65,11 @@ class _SignupScreenState
 
     FocusScope.of(context).unfocus();
 
-    final success = await ref
+    final errorMessage = await ref
         .read(sessionProvider.notifier)
         .signUp(
       companyName:
       _companyNameController.text.trim(),
-      tenantSlug:
-      _tenantSlugController.text.trim(),
       ownerEmail:
       _ownerEmailController.text.trim(),
       ownerPassword:
@@ -88,12 +82,23 @@ class _SignupScreenState
       return;
     }
 
-    if (success) {
-      // SessionNotifier updates the authentication
-      // state after successful registration.
-      //
-      // If GoRouter is listening to sessionProvider,
-      // it should automatically redirect the user.
+    if (errorMessage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      context.go(AppRoutes.home);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -119,26 +124,6 @@ class _SignupScreenState
     return AppUtils.isBlank(value)
         ? message
         : null;
-  }
-
-  String? _validateTenantSlug(
-      String? value,
-      ) {
-    if (AppUtils.isBlank(value)) {
-      return 'Tenant slug is required';
-    }
-
-    final slug = value!.trim();
-
-    final isValid = RegExp(
-      r'^[a-z0-9]+(?:-[a-z0-9]+)*$',
-    ).hasMatch(slug);
-
-    if (!isValid) {
-      return 'Use lowercase letters, numbers, and single hyphens';
-    }
-
-    return null;
   }
 
   String? _validateOwnerEmail(
@@ -211,7 +196,7 @@ class _SignupScreenState
     final stepSubtitle =
     switch (_currentStep) {
       0 =>
-      'Enter your company name and tenant URL slug.',
+      'Enter your company name.',
       1 =>
       'Add the owner information for this account.',
       _ =>
@@ -372,9 +357,6 @@ class _SignupScreenState
                           companyNameController:
                           _companyNameController,
 
-                          tenantSlugController:
-                          _tenantSlugController,
-
                           ownerDisplayNameController:
                           _ownerDisplayNameController,
 
@@ -425,9 +407,6 @@ class _SignupScreenState
 
                           requiredValidator:
                           _required,
-
-                          tenantSlugValidator:
-                          _validateTenantSlug,
 
                           ownerEmailValidator:
                           _validateOwnerEmail,
@@ -528,7 +507,6 @@ class _SignupStepFields
     super.key,
     required this.currentStep,
     required this.companyNameController,
-    required this.tenantSlugController,
     required this.ownerDisplayNameController,
     required this.ownerEmailController,
     required this.ownerPasswordController,
@@ -541,7 +519,6 @@ class _SignupStepFields
     required this.onToggleConfirmPassword,
     required this.onRememberChanged,
     required this.requiredValidator,
-    required this.tenantSlugValidator,
     required this.ownerEmailValidator,
     required this.passwordValidator,
     required this.confirmPasswordValidator,
@@ -551,9 +528,6 @@ class _SignupStepFields
 
   final TextEditingController
   companyNameController;
-
-  final TextEditingController
-  tenantSlugController;
 
   final TextEditingController
   ownerDisplayNameController;
@@ -588,10 +562,6 @@ class _SignupStepFields
 
   final String? Function(
       String? value,
-      ) tenantSlugValidator;
-
-  final String? Function(
-      String? value,
       ) ownerEmailValidator;
 
   final String? Function(
@@ -623,21 +593,6 @@ class _SignupStepFields
                   value,
                   'Company name is required',
                 ),
-          ),
-
-          SizedBox(height: 10.h),
-
-          AppTextField(
-            controller:
-            tenantSlugController,
-            enabled: !isLoading,
-            label: 'Tenant Slug',
-            textInputAction:
-            TextInputAction.done,
-            hint: 'Tenant slug',
-            underlined: true,
-            validator:
-            tenantSlugValidator,
           ),
         ],
       ),

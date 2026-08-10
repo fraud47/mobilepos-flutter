@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobilepos/src/extensions/context_extension.dart';
+import 'package:mobilepos/src/features/home/presentation/providers/home_provider.dart';
+import 'package:mobilepos/src/features/reciepts/presentation/providers/reciept_provider.dart';
 
 import '../widgets/reports/category_row.dart';
 
@@ -265,59 +268,75 @@ class _QuickAction extends StatelessWidget {
 // STATISTICS
 // -----------------------------------------------------------------------------
 
-class _StatsGrid extends StatelessWidget {
+class _StatsGrid extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final receiptsAsync = ref.watch(receiptProvider);
+
+    return receiptsAsync.when(
+      data: (receipts) {
+        final now = DateTime.now();
+        final todayReceipts = receipts.where((r) => r.date.year == now.year && r.date.month == now.month && r.date.day == now.day).toList();
+        
+        final todaySales = todayReceipts.fold<double>(0.0, (sum, r) => sum + r.amount);
+        final totalRevenue = receipts.fold<double>(0.0, (sum, r) => sum + r.amount);
+        final productsSold = receipts.fold<int>(0, (sum, r) => sum + r.items);
+        final transactions = receipts.length;
+
+        return Column(
           children: [
-            Expanded(
-              child: _StatCard(
-                title: 'Today\'s Sales',
-                value: '\$202,324',
-                change: '+10%',
-                isPositive: true,
-                icon: Icons.trending_up_rounded,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    title: 'Today\'s Sales',
+                    value: '\$${todaySales.toStringAsFixed(0)}',
+                    change: '+0%',
+                    isPositive: true,
+                    icon: Icons.trending_up_rounded,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Total Revenue',
+                    value: '\$${totalRevenue.toStringAsFixed(0)}',
+                    change: '+0%',
+                    isPositive: true,
+                    icon: Icons.attach_money_rounded,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: _StatCard(
-                title: 'Total Revenue',
-                value: '\$500,324',
-                change: '+45%',
-                isPositive: true,
-                icon: Icons.attach_money_rounded,
-              ),
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    title: 'Products Sold',
+                    value: '$productsSold',
+                    change: '0%',
+                    isPositive: true,
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Transactions',
+                    value: '$transactions',
+                    change: '0%',
+                    isPositive: true,
+                    icon: Icons.receipt_long_outlined,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                title: 'Products Sold',
-                value: '123,726',
-                change: '-12%',
-                isPositive: false,
-                icon: Icons.inventory_2_outlined,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: _StatCard(
-                title: 'Transactions',
-                value: '3,441',
-                change: '+8%',
-                isPositive: true,
-                icon: Icons.receipt_long_outlined,
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => const Center(child: Text('Error loading stats')),
     );
   }
 }
@@ -469,63 +488,85 @@ class _SalesOverviewCard extends StatelessWidget {
   }
 }
 
-class _SalesChart extends StatelessWidget {
+class _SalesChart extends ConsumerWidget {
+  
+  String _monthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final values = [0.45, 0.35, 0.58, 0.42, 0.72, 0.62, 0.82];
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = context.theme.colorScheme;
+    final receiptsAsync = ref.watch(receiptProvider);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: List.generate(
-        values.length,
+    return receiptsAsync.when(
+      data: (receipts) {
+        final now = DateTime.now();
+        final monthlyTotals = List.filled(7, 0.0);
+        final months = <String>[];
+        
+        for (int i = 6; i >= 0; i--) {
+           int m = now.month - i;
+           int y = now.year;
+           while (m <= 0) {
+             m += 12;
+             y -= 1;
+           }
+           months.add(_monthName(m));
+           
+           final monthReceipts = receipts.where((r) => r.date.year == y && r.date.month == m);
+           monthlyTotals[6 - i] = monthReceipts.fold<double>(0.0, (s, r) => s + r.amount);
+        }
+        
+        final maxTotal = monthlyTotals.isEmpty ? 1.0 : monthlyTotals.reduce((a, b) => a > b ? a : b);
+        final values = monthlyTotals.map((t) => (maxTotal > 0 ? t / maxTotal : 0.0).clamp(0.0, 1.0)).toList();
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: List.generate(
+            values.length,
             (index) {
-          final months = [
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'May',
-            'Jun',
-            'Jul',
-          ];
-
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: FractionallySizedBox(
-                        heightFactor: values[index],
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color:cs.primary,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(8.r),
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: FractionallySizedBox(
+                            heightFactor: values[index] > 0 ? values[index] : 0.01,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: cs.primary,
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(8.r),
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        months[index],
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    months[index],
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => const Center(child: Text('Error')),
     );
   }
 }
@@ -534,100 +575,110 @@ class _SalesChart extends StatelessWidget {
 // SALES STATISTICS
 // -----------------------------------------------------------------------------
 
-class _SalesStatisticsCard extends StatelessWidget {
-
+class _SalesStatisticsCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = context.theme.colorScheme;
-    return _DashboardCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final receiptsAsync = ref.watch(receiptProvider);
+    
+    return receiptsAsync.when(
+      data: (receipts) {
+        final totalSales = receipts.length;
+        final totalRevenue = receipts.fold<double>(0.0, (s, r) => s + r.amount);
+
+        return _DashboardCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  'Sales Statistics',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              _DropdownButton(label: 'Monthly'),
-            ],
-          ),
-          SizedBox(height: 25.h),
-          Row(
-            children: [
-              SizedBox(
-                width: 145.w,
-                height: 145.w,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 145.w,
-                      height: 145.w,
-                      child: CircularProgressIndicator(
-                        value: 0.72,
-                        strokeWidth: 22.w,
-                        backgroundColor: const Color(0xFFE5E5E5),
-                        valueColor: AlwaysStoppedAnimation(
-                          cs.primary,
-                        ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Sales Statistics',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+                  ),
+                  _DropdownButton(label: 'Total'),
+                ],
+              ),
+              SizedBox(height: 25.h),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 145.w,
+                    height: 145.w,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Text(
-                          '23,324',
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.w900,
+                        SizedBox(
+                          width: 145.w,
+                          height: 145.w,
+                          child: CircularProgressIndicator(
+                            value: 1.0,
+                            strokeWidth: 22.w,
+                            backgroundColor: const Color(0xFFE5E5E5),
+                            valueColor: AlwaysStoppedAnimation(
+                              cs.primary,
+                            ),
                           ),
                         ),
-                        Text(
-                          'Sales',
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: Colors.grey.shade500,
-                          ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$totalSales',
+                              style: TextStyle(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              'Sales',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 20.w),
-              Expanded(
-                child: Column(
-                  children: [
-                    const CategoryRow(
-                      title: 'Shoes',
-                      value: '1,880',
-                      percentage: '45%',
+                  ),
+                  SizedBox(width: 20.w),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        CategoryRow(
+                          title: 'Total Revenue',
+                          value: '\$${totalRevenue.toStringAsFixed(0)}',
+                          percentage: '100%',
+                        ),
+                        SizedBox(height: 14.h),
+                        CategoryRow(
+                          title: 'Transactions',
+                          value: '$totalSales',
+                          percentage: '100%',
+                        ),
+                        SizedBox(height: 14.h),
+                        CategoryRow(
+                          title: 'Avg. Order',
+                          value: '\$${(totalSales > 0 ? totalRevenue / totalSales : 0).toStringAsFixed(0)}',
+                          percentage: '100%',
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 14.h),
-                   const CategoryRow(
-                      title: 'Electronics',
-                      value: '1,230',
-                      percentage: '30%',
-                    ),
-                    SizedBox(height: 14.h),
-                    const CategoryRow(
-                      title: 'Clothes',
-                      value: '980',
-                      percentage: '25%',
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => const Center(child: Text('Error loading stats')),
     );
   }
 }
@@ -637,53 +688,40 @@ class _SalesStatisticsCard extends StatelessWidget {
 // RECENT ORDERS
 // -----------------------------------------------------------------------------
 
-class _RecentOrders extends StatelessWidget {
-  final orders = const [
-    _OrderData(
-      id: '#202523',
-      product: 'Airpods Pro Max',
-      date: '28 Mar 2025',
-      payment: 'Mastercard',
-      amount: '\$1,230.00',
-      status: 'In Progress',
-    ),
-    _OrderData(
-      id: '#202522',
-      product: 'Summer Clothes',
-      date: '27 Mar 2025',
-      payment: 'Paypal',
-      amount: '\$3,112.00',
-      status: 'Complete',
-    ),
-    _OrderData(
-      id: '#202521',
-      product: 'Nike Shoes',
-      date: '26 Mar 2025',
-      payment: 'Mastercard',
-      amount: '\$1,211.00',
-      status: 'Waiting',
-    ),
-    _OrderData(
-      id: '#202520',
-      product: 'Front Table',
-      date: '25 Mar 2025',
-      payment: 'Visa',
-      amount: '\$421.00',
-      status: 'In Progress',
-    ),
-  ];
-
+class _RecentOrders extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: orders
-          .map(
-            (order) => Padding(
-          padding: EdgeInsets.only(bottom: 8.h),
-          child: _OrderCard(order: order),
-        ),
-      )
-          .toList(),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final receiptsAsync = ref.watch(receiptProvider);
+
+    return receiptsAsync.when(
+      data: (receipts) {
+        if (receipts.isEmpty) {
+          return const Padding(padding: EdgeInsets.all(16.0), child: Text('No recent orders'));
+        }
+
+        final sorted = [...receipts]..sort((a, b) => b.date.compareTo(a.date));
+        final recent = sorted.take(4).toList();
+
+        return Column(
+          children: recent.map((r) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: _OrderCard(
+                order: _OrderData(
+                  id: '#${r.id}',
+                  product: '${r.items} items',
+                  date: '${r.date.day}/${r.date.month}/${r.date.year}',
+                  payment: r.paymentMethod,
+                  amount: '\$${r.amount.toStringAsFixed(2)}',
+                  status: 'Complete',
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => const Center(child: Text('Error loading orders')),
     );
   }
 }
@@ -703,14 +741,16 @@ class _OrderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                order.id,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w800,
+              Expanded(
+                child: Text(
+                  order.id,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              const Spacer(),
               _StatusBadge(
                 status: order.status,
               ),
@@ -805,37 +845,43 @@ class _OrderData {
 // TOP SELLING PRODUCTS
 // -----------------------------------------------------------------------------
 
-class _TopSellingProducts extends StatelessWidget {
+class _TopSellingProducts extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return _DashboardCard(
-      child: Column(
-        children: [
-          _ProductRow(
-            name: 'Apple Watch Series 10',
-            category: 'Apple',
-            price: '\$799.00',
-            sales: '120 sold',
-            icon: Icons.watch_outlined,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productsAsync = ref.watch(homeProductsProvider);
+
+    return productsAsync.when(
+      data: (products) {
+        if (products.isEmpty) {
+          return const _DashboardCard(child: Text('No products available'));
+        }
+
+        final sorted = [...products]..sort((a, b) => b.stock.compareTo(a.stock));
+        final top = sorted.take(3).toList();
+
+        return _DashboardCard(
+          child: Column(
+            children: top.asMap().entries.map((e) {
+              final index = e.key;
+              final p = e.value;
+              return Column(
+                children: [
+                  if (index > 0) Divider(height: 24.h),
+                  _ProductRow(
+                    name: p.name,
+                    category: 'Product',
+                    price: '\$${p.price.toStringAsFixed(2)}',
+                    sales: '${p.stock} in stock',
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                ],
+              );
+            }).toList(),
           ),
-          Divider(height: 24.h),
-          _ProductRow(
-            name: 'Airpods Pro Max',
-            category: 'Apple',
-            price: '\$549.00',
-            sales: '98 sold',
-            icon: Icons.headphones_outlined,
-          ),
-          Divider(height: 24.h),
-          _ProductRow(
-            name: 'Nike Air Max',
-            category: 'Nike',
-            price: '\$220.00',
-            sales: '84 sold',
-            icon: Icons.directions_run_outlined,
-          ),
-        ],
-      ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => const Center(child: Text('Error loading products')),
     );
   }
 }

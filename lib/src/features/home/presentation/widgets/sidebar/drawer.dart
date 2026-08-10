@@ -28,22 +28,11 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   const SectionTitle(title: 'Management'),
                   DrawerItem(
-                    icon: FlutterRemix.message_3_fill,
-                    title: 'Help Chat',
-                    onTap: () {},
-                  ),
-                  DrawerItem(
                     icon: FlutterRemix.store_fill,
                     title: 'Inventory Management',
-                    count: 45,
                     onTap: () {
                       context.push(AppRoutes.inventoryManagement);
                     },
-                  ),
-                  DrawerItem(
-                    icon: FlutterRemix.wallet_fill,
-                    title: 'Add Expense',
-                    onTap: () {},
                   ),
                   DrawerItem(
                     icon: FlutterRemix.file_list_2_fill,
@@ -53,15 +42,17 @@ class AppDrawer extends StatelessWidget {
                   DrawerItem(
                     icon: FlutterRemix.team_fill,
                     title: 'Customers Management',
-                    count: 0,
-                    onTap: () =>context.push(AppRoutes.customerManagement)
-                    ,
+                    onTap: () =>context.push(AppRoutes.customerManagement),
                   ),
                   DrawerItem(
                     icon: FlutterRemix.user_settings_fill,
                     title: 'Employee Management',
-                    count: 1,
                     onTap: () =>context.push(AppRoutes.usersList),
+                  ),
+                  DrawerItem(
+                    icon: FlutterRemix.building_2_fill,
+                    title: 'Branches',
+                    onTap: () =>context.push(AppRoutes.branchesManagement),
                   ),
                   Divider(height: 8.h, color: Colors.black12, thickness: 0.75),
                   DrawerItem(
@@ -70,8 +61,14 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {},
                   ),
                   DrawerItem(
+                    icon: FlutterRemix.message_3_fill,
+                    title: 'Help Chat',
+                    onTap: () {},
+                  ),
+                  DrawerItem(
                     icon: FlutterRemix.shut_down_fill,
                     title: 'Log Out',
+                    color: Colors.red,
                     onTap: () {
                       showDialog<bool>(
                         context: context,

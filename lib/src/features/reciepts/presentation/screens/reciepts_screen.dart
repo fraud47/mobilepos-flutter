@@ -11,7 +11,7 @@ class ReceiptsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final receipts = ref.watch(receiptProvider);
+    final receiptsAsync = ref.watch(receiptProvider);
 
     return Scaffold(
       appBar: const ReceiptAppBar(),
@@ -20,8 +20,17 @@ class ReceiptsScreen extends ConsumerWidget {
         children: [
           const ReceiptDateFilter(),
           Expanded(
-            child: ReceiptList(
-              receipts: receipts,
+            child: receiptsAsync.when(
+              data: (receipts) {
+                if (receipts.isEmpty) {
+                  return const Center(child: Text('No receipts found.'));
+                }
+                return ReceiptList(
+                  receipts: receipts,
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text('Error: $error')),
             ),
           ),
         ],

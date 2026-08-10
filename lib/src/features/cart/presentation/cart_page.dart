@@ -1,12 +1,17 @@
 import 'package:mobilepos/src/features/inventory/domain/entities/inventory_item.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobilepos/src/imports/core_imports.dart';
 import 'package:mobilepos/src/imports/packages_imports.dart';
 import 'package:mobilepos/src/features/home/presentation/providers/home_provider.dart';
+import 'package:mobilepos/src/features/cart/presentation/providers/checkout_controller.dart';
 import '../domain/models/cart_item_visual.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobilepos/src/routing/app_routes.dart';
+import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
 import 'widgets/cart_item_card.dart';
 import 'widgets/round_icon_button.dart';
 
-class CheckoutPage extends StatelessWidget {
+class CheckoutPage extends ConsumerWidget {
   const CheckoutPage({
     super.key,
     required this.state,
@@ -27,7 +32,7 @@ class CheckoutPage extends StatelessWidget {
   final ProductQuantityChanged onQuantityChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final subtotal = state.subtotal;
     final total = subtotal;
 
@@ -69,6 +74,9 @@ class CheckoutPage extends StatelessWidget {
                         _OrderPanel(
                           subtotal: subtotal,
                           total: total,
+                          onCheckout: () {
+                            _showPaymentOptions(context, ref);
+                          },
                         ),
                       ],
                     ),
@@ -81,9 +89,105 @@ class CheckoutPage extends StatelessWidget {
       ),
     );
   }
+
+  void _showPaymentOptions(BuildContext context, WidgetRef ref) {
+    // Capture the router and scaffold messenger BEFORE any unmounting can occur
+    final router = GoRouter.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isDismissible: false,
+      enableDrag: false,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (bottomSheetContext) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final checkoutState = ref.watch(checkoutControllerProvider);
+            final isLoading = checkoutState.isLoading;
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Select Payment Method',
+                      style: Theme.of(bottomSheetContext).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                    ),
+                    SizedBox(height: 20.h),
+                    if (isLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
+                      ListTile(
+                        leading: const Icon(FlutterRemix.money_dollar_circle_line, color: Colors.black),
+                        title: const Text('Cash', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                        onTap: () async {
+                          // Trigger API call
+                          final success = await ref.read(checkoutControllerProvider.notifier).checkoutCash(state);
+                          
+                          if (!success) {
+                            // Show error
+                            final error = ref.read(checkoutControllerProvider).error;
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text(error?.toString() ?? 'Checkout failed'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Success!
+                          Navigator.pop(bottomSheetContext); // close bottom sheet
+                          
+                          // Store the current state as a snapshot for the receipt
+                          final finalState = state.copyWith();
+                          
+                          // Navigate FIRST to avoid unmounting the widget before routing
+                          router.push(AppRoutes.receiptDetail, extra: finalState);
+                          
+                          // Clear the actual cart
+                          onClearCart();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(FlutterRemix.bank_card_line, color: Colors.black),
+                        title: const Text('Online Payment', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext); // close bottom sheet
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(content: Text('Online Payment is coming soon!')),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(FlutterRemix.close_line, color: Colors.red),
+                        title: const Text('Cancel', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
 }
 
-class _CartHeader extends StatelessWidget {
+class _CartHeader extends ConsumerWidget {
   const _CartHeader({
     required this.onBack,
     required this.onClearCart,
@@ -93,7 +197,9 @@ class _CartHeader extends StatelessWidget {
   final VoidCallback onClearCart;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeBranch = ref.watch(activeBranchProvider);
+    
     return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 8.h),
       child: Row(
@@ -104,13 +210,36 @@ class _CartHeader extends StatelessWidget {
           ),
           SizedBox(width: 14.w),
           Expanded(
-            child: Text(
-              'Cart',
-              style: context.textTheme.titleMedium?.copyWith(
-                color: Colors.black,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w800,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Cart',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: Colors.black,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (activeBranch != null) ...[
+                  SizedBox(height: 2.h),
+                  Row(
+                    children: [
+                      Icon(FlutterRemix.building_2_fill, size: 12.sp, color: Colors.grey[600]),
+                      SizedBox(width: 4.w),
+                      Text(
+                        activeBranch.name,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
           ),
           RoundIconButton(
@@ -133,10 +262,12 @@ class _OrderPanel extends StatelessWidget {
   const _OrderPanel({
     required this.subtotal,
     required this.total,
+    required this.onCheckout,
   });
 
   final double subtotal;
   final double total;
+  final VoidCallback onCheckout;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +319,7 @@ class _OrderPanel extends StatelessWidget {
             width: double.infinity,
             height: 45.h,
             child: FilledButton(
-              onPressed: () {},
+              onPressed: onCheckout,
               style: FilledButton.styleFrom(
                 backgroundColor: cs.primary,
                 foregroundColor: Colors.white,

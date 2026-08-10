@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../../config/app_config.dart';
-import '../../../../../core/errors/exceptions.dart';
+import 'package:mobilepos/src/core/errors/exceptions.dart';
 import '../../../../../imports/core_imports.dart';
 import '../../models/create_unit_of_measure_request.dart';
 import '../../models/unit_of_measure_model.dart';

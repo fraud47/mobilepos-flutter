@@ -1,7 +1,11 @@
 import 'package:mobilepos/src/features/inventory/domain/entities/inventory_item.dart';
 import 'package:mobilepos/src/imports/packages_imports.dart';
+import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
 
 import '../../../inventory/domain/entities/wholesale_item.dart';
+import 'package:mobilepos/src/features/inventory/data/data_sources/impl/inventory_remote_datasource_impl.dart';
+import 'package:mobilepos/src/features/inventory/data/repositories/inventory_repository_impl.dart';
+import 'package:mobilepos/src/features/inventory/data/repositories/inventory_repository.dart';
 
 final homeControllerProvider =
     StateNotifierProvider<HomeController, HomeState>((ref) {
@@ -49,18 +53,7 @@ class HomeState {
     return 0;
   }
 
-  List<InventoryItem> get filteredProducts {
-    final query = itemSearchQuery.trim().toLowerCase();
-    if (query.isEmpty) {
-      return homeProducts;
-    }
 
-    return homeProducts.where((product) {
-      return product.name.toLowerCase().contains(query) ||
-          product.price.toStringAsFixed(2).contains(query) ||
-          product.stock.toString().contains(query);
-    }).toList();
-  }
 
   HomeState copyWith({
     HomeTab? selectedTab,
@@ -231,49 +224,33 @@ class CartItem {
   }
 }
 
-final homeProducts = [
-  InventoryItem(
-      name: "Coca Cola 2L",
-      stock: 124,
-      price: 2.50,
-      image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e",
-      wholesalePrices: [
-        WholesaleTier(minimumQuantity: 6, price: 2.30),
-        WholesaleTier(minimumQuantity: 12, price: 2.10),
-        WholesaleTier(minimumQuantity: 24, price: 1.95),
-      ],
-      enableWholesale: true),
-  InventoryItem(
-    name: "Cooking Oil",
-    stock: 34,
-    price: 5.99,
-    image: "https://images.unsplash.com/photo-1620706857370-e1b9770e8bb1",
-    wholesalePrices: [
-      WholesaleTier(minimumQuantity: 5, price: 5.70),
-      WholesaleTier(minimumQuantity: 10, price: 5.40),
-      WholesaleTier(minimumQuantity: 20, price: 5.10),
-    ],
-    enableWholesale: true,
-  ),
-  InventoryItem(
-      name: "Sugar 2kg",
-      stock: 10,
-      price: 3.20,
-      image: "https://images.unsplash.com/photo-1586201375761-83865001e31c",
-      wholesalePrices: [
-        WholesaleTier(minimumQuantity: 5, price: 3.00),
-        WholesaleTier(minimumQuantity: 10, price: 2.80),
-      ],
-      enableWholesale: true),
-  InventoryItem(
-      name: "Rice 10kg",
-      stock: 0,
-      price: 12.99,
-      image: "https://images.unsplash.com/photo-1516684732162-798a0062be99",
-      wholesalePrices: [
-        WholesaleTier(minimumQuantity: 2, price: 12.50),
-        WholesaleTier(minimumQuantity: 5, price: 11.99),
-        WholesaleTier(minimumQuantity: 10, price: 11.50),
-      ],
-      enableWholesale: true),
-];
+final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
+  return InventoryRepositoryImpl(InventoryRemoteDataSourceImpl.instance);
+});
+
+final homeProductsProvider = FutureProvider<List<InventoryItem>>((ref) async {
+  final repository = ref.watch(inventoryRepositoryProvider);
+  final activeBranch = ref.watch(activeBranchProvider);
+  final result = await repository.getInventory(branchId: activeBranch?.id);
+  
+  return result.fold(
+    (failure) => throw failure.message,
+    (inventory) => inventory,
+  );
+});
+
+final filteredProductsProvider = Provider<AsyncValue<List<InventoryItem>>>((ref) {
+  final homeState = ref.watch(homeControllerProvider);
+  final asyncProducts = ref.watch(homeProductsProvider);
+
+  return asyncProducts.whenData((products) {
+    final query = homeState.itemSearchQuery.trim().toLowerCase();
+    if (query.isEmpty) return products;
+    
+    return products.where((product) {
+      return product.name.toLowerCase().contains(query) ||
+          product.price.toStringAsFixed(2).contains(query) ||
+          product.stock.toString().contains(query);
+    }).toList();
+  });
+});

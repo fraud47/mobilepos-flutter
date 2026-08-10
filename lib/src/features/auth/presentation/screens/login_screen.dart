@@ -142,7 +142,7 @@ class _SignInSheetState
 
     FocusScope.of(context).unfocus();
 
-    final success = await ref
+    final errorMessage = await ref
         .read(sessionProvider.notifier)
         .login(
       email: _emailController.text.trim(),
@@ -153,9 +153,26 @@ class _SignInSheetState
       return;
     }
 
-    if (success) {
-
-      Navigator.of(context).pop();
+    if (errorMessage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      context.go(AppRoutes.home);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 

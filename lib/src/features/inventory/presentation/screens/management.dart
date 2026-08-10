@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobilepos/src/routing/app_routes.dart';
 import 'package:mobilepos/src/features/inventory/presentation/screens/inventory_actions.dart';
 import 'package:mobilepos/src/features/inventory/presentation/widgets/inventory_card.dart';
+import '../providers/inventory_provider.dart';
 
 
-class InventoryPage extends StatelessWidget {
+class InventoryPage extends ConsumerWidget {
   const InventoryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
 
-    final products = [];
+    final inventoryAsync = ref.watch(inventoryListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -64,10 +68,28 @@ class InventoryPage extends StatelessWidget {
           ),
 
           Expanded(
-            child: ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return InventoryCard(item: products[index]);},
+            child: inventoryAsync.when(
+              data: (products) {
+                if (products.isEmpty) {
+                  return const Center(child: Text('No inventory items found'));
+                }
+                return ListView.builder(
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final item = products[index];
+                    return GestureDetector(
+                      onTap: () {
+                        context.push(AppRoutes.inventoryPage, extra: item);
+                      },
+                      child: InventoryCard(item: item),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Text('Error: $error', style: const TextStyle(color: Colors.red)),
+              ),
             ),
           ),
         ],

@@ -7,7 +7,6 @@ abstract class AuthRemoteDataSource {
   });
   Future<AuthSessionModel> signUp({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,

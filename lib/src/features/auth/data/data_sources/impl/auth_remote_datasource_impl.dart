@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../../config/app_config.dart';
-import '../../../../../core/errors/exceptions.dart';
+import 'package:mobilepos/src/core/errors/exceptions.dart';
 import '../../../../../imports/core_imports.dart';
 import '../../models/auth_session_model.dart';
 import '../remote/auth_remote_datasource.dart';
@@ -44,7 +44,6 @@ class AuthRemoteDataSourceImpl
   @override
   Future<AuthSessionModel> signUp({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,

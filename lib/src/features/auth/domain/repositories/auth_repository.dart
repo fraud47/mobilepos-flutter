@@ -11,7 +11,6 @@ abstract class AuthRepository {
 
   FutureEither<AuthSessionEntity> signup({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,
@@ -22,6 +21,8 @@ abstract class AuthRepository {
   });
 
   FutureEither<AuthSessionEntity?> getCurrentSession();
+
+  FutureEither<void> refreshSessionToken();
 
   FutureEither<void> logout();
 }

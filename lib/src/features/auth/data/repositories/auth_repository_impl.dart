@@ -97,6 +97,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  FutureEither<void> refreshSessionToken() async {
+    try {
+      final session = await localDataSource.getCurrentSession();
+      if (session == null || session.refreshToken.isEmpty) {
+        return const Left(ServerFailure('No refresh token available'));
+      }
+      
+      final newAccessToken = await remoteDataSource.refreshAccessToken(
+        refreshToken: session.refreshToken,
+      );
+
+      await localDataSource.updateAccessToken(newAccessToken);
+      
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   FutureEither<void> logout() async {
     try {
       await localDataSource.clearSession();
@@ -119,15 +139,13 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   FutureEither<AuthSessionEntity> signup({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
-    required String ownerDisplayName})async {
-
+    required String ownerDisplayName,
+  }) async {
     try {
       final session = await remoteDataSource.signUp(
           companyName: companyName,
-          tenantSlug: tenantSlug,
           ownerEmail: ownerEmail,
           ownerPassword: ownerPassword,
           ownerDisplayName: ownerDisplayName

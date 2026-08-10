@@ -1,6 +1,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../config/app_config.dart';
 import '../../../../core/databases/database_provider.dart';
 import '../../data/data_sources/impl/auth_local_datasource_impl.dart';
 import '../../data/data_sources/impl/auth_remote_datasource_impl.dart';
@@ -165,6 +166,9 @@ class SessionNotifier
   })  : _repository = repository,
         super(const SessionState()) {
     _init();
+    AppConfig.onUnauthenticated.stream.listen((_) {
+      logout();
+    });
   }
 
   final AuthRepository _repository;
@@ -270,7 +274,7 @@ class SessionNotifier
       },
     );
   }
-  Future<bool> login({
+  Future<String?> login({
     required String email,
     required String password,
   }) async {
@@ -291,7 +295,7 @@ class SessionNotifier
               '${failure.message}',
         );
 
-        return false;
+        return failure.message;
       },
           (session) {
         debugPrint(
@@ -305,14 +309,13 @@ class SessionNotifier
           session: session,
         );
 
-        return true;
+        return null;
       },
     );
   }
 
-  Future<bool> signUp({
+  Future<String?> signUp({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,
@@ -325,7 +328,6 @@ class SessionNotifier
     final result =
     await _repository.signup(
       companyName: companyName,
-      tenantSlug: tenantSlug,
       ownerEmail: ownerEmail,
       ownerPassword: ownerPassword,
       ownerDisplayName: ownerDisplayName,
@@ -338,15 +340,15 @@ class SessionNotifier
                 status: SessionStatus.unauthenticated
             );
 
-        return false;
+        return failure.message;
       },
           (session) {
-            state =
-            const SessionState(
-                status: SessionStatus.authenticated
+            state = SessionState(
+              status: SessionStatus.authenticated,
+              session: session,
             );
 
-        return true;
+        return null;
       },
     );
   }
@@ -431,6 +433,26 @@ class SessionNotifier
         );
 
         return true;
+      },
+    );
+  }
+
+  // ===========================================================================
+  // PROACTIVE REFRESH
+  // ===========================================================================
+  Future<void> proactiveTokenRefresh() async {
+    if (state.status != SessionStatus.authenticated) return;
+    debugPrint('SESSION: Proactively refreshing token due to movement...');
+    final result = await _repository.refreshSessionToken();
+    result.fold(
+      (failure) {
+        debugPrint('SESSION: Proactive refresh failed: ${failure.message}');
+      },
+      (_) {
+        debugPrint('SESSION: Proactive refresh succeeded.');
+        // Optionally reload the session from storage to get the new token if needed by the state,
+        // but typically the Dio interceptor just reads from secure storage directly,
+        // so we don't necessarily need to update the SessionState here.
       },
     );
   }

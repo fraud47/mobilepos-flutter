@@ -15,7 +15,9 @@ abstract final class AppRoutes {
   static const String inventoryPage = '/inventory-page';
   static const String customerManagement = '/customer-management';
   static const String receiptManagement = '/receipt-management';
+  static const String receiptDetail = '/receipt-detail';
   static const String usersList = '/users-list';
   static const String addUser = '/add-user';
   static const String unitOfMeasure = '/unit-of-measure';
+  static const String branchesManagement = '/branches-management';
 }

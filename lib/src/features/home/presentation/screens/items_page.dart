@@ -14,64 +14,70 @@ class ItemsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeControllerProvider);
     final controller = ref.read(homeControllerProvider.notifier);
-    final products = state.filteredProducts;
+    final productsAsync = ref.watch(filteredProductsProvider);
 
-    if (products.isEmpty) {
-      return AppEmptyState(
-        icon: FlutterRemix.search_line,
-        title: 'No items found',
-        subtitle: 'Try a different item name, price, or stock value.',
-        actionLabel: 'Clear search',
-        onAction: controller.hideItemSearch,
-      );
-    }
-
-    if (!state.isItemsGridView) {
-      return ListView.separated(
-        padding: EdgeInsets.fromLTRB(6.w, 6.h, 6.w, 6.h),
-        itemCount: products.length,
-        separatorBuilder: (_, __) => SizedBox(height: 8.h),
-        itemBuilder: (context, index) {
-          final product = products[index];
-          return _ProductCard(
-            product: product,
-            state: state,
-            isListTile: true,
-            onTap: () => onProductSelected(product),
-            onLongPress: () => _showQuantityEditor(
-              context,
-              product,
-              state,
-              controller,
-            ),
+    return productsAsync.when(
+      data: (products) {
+        if (products.isEmpty) {
+          return AppEmptyState(
+            icon: FlutterRemix.search_line,
+            title: 'No items found',
+            subtitle: 'Try a different item name, price, or stock value.',
+            actionLabel: 'Clear search',
+            onAction: controller.hideItemSearch,
           );
-        },
-      );
-    }
+        }
 
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(6.w, 6.h, 6.w, 6.h),
-      itemCount: products.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.92,
-        mainAxisSpacing: 4.h,
-        crossAxisSpacing: 4.w,
-      ),
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return _ProductCard(
-          product: product,
-          state: state,
-          onTap: () => onProductSelected(product),
-          onLongPress: () => _showQuantityEditor(
-            context,
-            product,
-            state,
-            controller,
+        if (!state.isItemsGridView) {
+          return ListView.separated(
+            padding: EdgeInsets.fromLTRB(6.w, 6.h, 6.w, 6.h),
+            itemCount: products.length,
+            separatorBuilder: (_, __) => SizedBox(height: 8.h),
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _ProductCard(
+                product: product,
+                state: state,
+                isListTile: true,
+                onTap: () => onProductSelected(product),
+                onLongPress: () => _showQuantityEditor(
+                  context,
+                  product,
+                  state,
+                  controller,
+                ),
+              );
+            },
+          );
+        }
+
+        return GridView.builder(
+          padding: EdgeInsets.fromLTRB(6.w, 6.h, 6.w, 6.h),
+          itemCount: products.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 0.92,
+            mainAxisSpacing: 4.h,
+            crossAxisSpacing: 4.w,
           ),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return _ProductCard(
+              product: product,
+              state: state,
+              onTap: () => onProductSelected(product),
+              onLongPress: () => _showQuantityEditor(
+                context,
+                product,
+                state,
+                controller,
+              ),
+            );
+          },
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(child: Text('Error: $error')),
     );
   }
 

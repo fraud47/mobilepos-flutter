@@ -145,7 +145,6 @@ class AuthService {
 
   FutureEither<Map<String, dynamic>?> signUp({
     required String companyName,
-    required String tenantSlug,
     required String ownerEmail,
     required String ownerPassword,
     required String ownerDisplayName,
@@ -156,7 +155,6 @@ class AuthService {
         '/api/v1/tenants',
         data: {
           'companyName': companyName,
-          'tenantSlug': tenantSlug,
           'ownerEmail': ownerEmail,
           'ownerPassword': ownerPassword,
           'ownerDisplayName': ownerDisplayName,

@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../../../../../core/errors/exceptions.dart';
+import 'package:mobilepos/src/core/errors/exceptions.dart';
 import '../../../../../core/databases/app_database.dart';
 import '../../models/unit_of_measure_model.dart';
 import '../local/units_of_measure_local_datasource.dart';

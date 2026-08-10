@@ -17,6 +17,8 @@ class AppConfig {
 
   static Timer? _refreshTimer;
 
+  static final StreamController<void> onUnauthenticated = StreamController<void>.broadcast();
+
   // Prevent multiple refresh requests
   // from running at the same time.
   static Future<String?>? _refreshFuture;
@@ -102,7 +104,8 @@ class AppConfig {
               e.response?.statusCode;
 
           AppLogger.error(
-            '❌ [DIO] ERROR[$statusCode] => PATH: ${e.requestOptions.path}',
+            '❌ [DIO] ERROR[$statusCode] => PATH: ${e.requestOptions.path}\n'
+            '❌ DATA: ${e.response?.data}',
           );
 
           // Only refresh when server returns 401
@@ -119,6 +122,8 @@ class AppConfig {
             AppLogger.error(
               '❌ Refresh endpoint returned 401',
             );
+            
+            onUnauthenticated.add(null);
 
             return handler.next(e);
           }
@@ -137,6 +142,8 @@ class AppConfig {
               AppLogger.error(
                 '❌ Could not refresh access token',
               );
+              
+              onUnauthenticated.add(null);
 
               return handler.next(e);
             }
@@ -252,7 +259,7 @@ class AppConfig {
       RequestOptions options,
       ) {
     return options.path ==
-        '/api/v1/auth/refresh';
+        '/api/v1/auth/refresh-token';
   }
 
   // --------------------------------------------------
@@ -280,6 +287,7 @@ class AppConfig {
     _refreshTimer = null;
 
     _refreshFuture = null;
+    await onUnauthenticated.close();
   }
 
   // --------------------------------------------------

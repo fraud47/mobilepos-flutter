@@ -13,7 +13,7 @@ class UsersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final users = ref.watch(usersProvider);
+    final usersAsync = ref.watch(usersProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
@@ -27,12 +27,21 @@ class UsersScreen extends ConsumerWidget {
 
 
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: users.length,
-              itemBuilder: (_, index) {
-                return UserCard(user: users[index]);
+            child: usersAsync.when(
+              data: (users) {
+                if (users.isEmpty) {
+                  return const Center(child: Text('No users found.'));
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: users.length,
+                  itemBuilder: (_, index) {
+                    return UserCard(user: users[index]);
+                  },
+                );
               },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text('Error: $error')),
             ),
           ),
         ],

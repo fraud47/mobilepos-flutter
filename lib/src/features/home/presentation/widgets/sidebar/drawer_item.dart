@@ -6,12 +6,14 @@ class DrawerItem extends StatelessWidget {
   final String title;
   final int? count;
   final VoidCallback onTap;
+  final Color? color;
   const DrawerItem({
     super.key,
     required this.icon,
     required this.title,
     this.count,
     required this.onTap,
+    this.color,
   });
 
   @override
@@ -21,12 +23,12 @@ class DrawerItem extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: colorScheme.onSurface,
+        color: color ?? colorScheme.onSurface,
         size: 20.sp,
       ),
       title: Text(title,
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: color ?? colorScheme.onSurface,
             fontWeight: FontWeight.w400,
             fontSize: 12.sp,
           )),

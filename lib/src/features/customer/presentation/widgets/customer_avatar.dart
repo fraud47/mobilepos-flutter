@@ -8,8 +8,10 @@ class CustomerAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 80,
       backgroundColor: Colors.grey.shade200,
-      backgroundImage: const AssetImage(
-        "assets/images/customer.png",
+      child: const Icon(
+        Icons.person,
+        size: 80,
+        color: Colors.grey,
       ),
     );
   }
