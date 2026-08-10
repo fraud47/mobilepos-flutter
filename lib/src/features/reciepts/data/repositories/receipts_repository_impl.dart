@@ -35,4 +35,15 @@ class ReceiptsRepositoryImpl implements ReceiptsRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+  @override
+  FutureEither<void> cancelInvoice(int invoiceId) async {
+    try {
+      await remoteDataSource.cancelInvoice(invoiceId);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

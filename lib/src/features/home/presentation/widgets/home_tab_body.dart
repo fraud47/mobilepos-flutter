@@ -45,8 +45,6 @@ class HomeTabBody extends StatelessWidget {
           : CounterHomeView(onNewSale: onNewSale),
       HomeTab.items => ItemsPage(onProductSelected: onProductSelected),
       HomeTab.reports => const ReportsPage(),
-      HomeTab.today => const PlaceholderTab(label: 'Today'),
-      HomeTab.more => const PlaceholderTab(label: 'More'),
     };
   }
 }

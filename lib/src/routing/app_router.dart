@@ -20,7 +20,11 @@ import 'package:mobilepos/src/features/users/presentation/screens/users_list.dar
 import 'package:mobilepos/src/features/users/presentation/screens/user_create.dart';
 import 'package:mobilepos/src/features/branches/presentation/screens/branches_screen.dart';
 import 'package:mobilepos/src/routing/router_refresh_notifier.dart';
+import 'package:mobilepos/src/features/inventory/presentation/screens/categories_screen.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobilepos/src/features/reciepts/presentation/screens/historical_receipt_detail_screen.dart';
+import 'package:mobilepos/src/features/reciepts/domain/entities/reciept.dart';
+import 'package:mobilepos/src/features/profile/presentation/screens/profile_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final routerRefresh =
@@ -127,6 +131,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return ReceiptDetailScreen(state: homeState);
         },
       ),
+      GoRoute(
+        path: AppRoutes.historicalReceiptDetail,
+        name: 'historicalReceiptDetail',
+        builder: (context, state) {
+          final receipt = state.extra as Receipt;
+          return HistoricalReceiptDetailScreen(receipt: receipt);
+        },
+      ),
 
       // ---------------------------------------------------------------------
       // USERS
@@ -180,6 +192,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'branchesManagement',
         builder: (context, state) {
           return const BranchesScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.manageCategories,
+        name: 'manageCategories',
+        builder: (context, state) {
+          return const CategoriesScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        builder: (context, state) {
+          return const ProfileScreen();
         },
       ),
     ],

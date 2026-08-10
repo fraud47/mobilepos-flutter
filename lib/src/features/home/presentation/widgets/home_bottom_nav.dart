@@ -18,10 +18,8 @@ class HomeBottomNav extends StatelessWidget {
 
   static const List<BottomNavItem> _items = [
     BottomNavItem(HomeTab.reports, 'Reports', FlutterRemix.bar_chart_line),
-    BottomNavItem(HomeTab.today, 'Today', FlutterRemix.calendar_todo_line),
     BottomNavItem(HomeTab.counter, 'Cart', FlutterRemix.shopping_basket_line),
     BottomNavItem(HomeTab.items, 'Items', FlutterRemix.barcode_line),
-    BottomNavItem(HomeTab.more, 'More', FlutterRemix.dashboard_line),
   ];
 
   @override

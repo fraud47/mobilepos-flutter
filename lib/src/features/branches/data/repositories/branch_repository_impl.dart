@@ -35,4 +35,28 @@ class BranchRepositoryImpl implements BranchRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  FutureEither<Branch> updateBranch(int branchId, CreateBranchDto dto) async {
+    try {
+      final result = await remoteDataSource.updateBranch(branchId, dto);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  FutureEither<void> deleteBranch(int branchId) async {
+    try {
+      await remoteDataSource.deleteBranch(branchId);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

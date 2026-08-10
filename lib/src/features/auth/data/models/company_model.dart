@@ -10,6 +10,7 @@ class CompanyModel extends CompanyEntity {
     required super.branchCount,
     required super.subscriptionStatus,
     required super.subscriptionPlan,
+    super.trialEndsAt,
   });
 
   factory CompanyModel.fromJson(
@@ -26,6 +27,9 @@ class CompanyModel extends CompanyEntity {
       json['subscriptionStatus'] as String,
       subscriptionPlan:
       json['subscriptionPlan'] as String,
+      trialEndsAt: json['trialEndsAt'] != null
+          ? DateTime.tryParse(json['trialEndsAt'] as String)
+          : null,
     );
   }
 }

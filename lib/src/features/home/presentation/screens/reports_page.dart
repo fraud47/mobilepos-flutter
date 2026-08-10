@@ -280,7 +280,7 @@ class _StatsGrid extends ConsumerWidget {
         
         final todaySales = todayReceipts.fold<double>(0.0, (sum, r) => sum + r.amount);
         final totalRevenue = receipts.fold<double>(0.0, (sum, r) => sum + r.amount);
-        final productsSold = receipts.fold<int>(0, (sum, r) => sum + r.items);
+        final productsSold = receipts.fold<int>(0, (sum, r) => sum + r.itemsCount);
         final transactions = receipts.length;
 
         return Column(

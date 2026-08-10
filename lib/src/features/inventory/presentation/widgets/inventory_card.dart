@@ -72,7 +72,7 @@ class InventoryCard extends StatelessWidget {
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    "ID : #123",
+                    item.sku ?? "ID : #${item.id ?? 'Unknown'}",
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: Colors.grey.shade600,
@@ -82,24 +82,26 @@ class InventoryCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        "Electronics",
+                        item.category ?? "Uncategorized",
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
-                      SizedBox(width: 8.w),
-                      Container(
-                        width: 3.w,
-                        height: 3.w,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                      if (item.category != null || item.id != null) ...[
+                        SizedBox(width: 8.w),
+                        Container(
+                          width: 3.w,
+                          height: 3.w,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 8.w),
+                        SizedBox(width: 8.w),
+                      ],
                       Text(
-                        "247+ Sales",
+                        "0 Sales",
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.grey.shade500,
@@ -140,7 +142,7 @@ class InventoryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "\$${item.price.toStringAsFixed(0)}",
+                  "\$${item.price.toStringAsFixed(2)}",
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,

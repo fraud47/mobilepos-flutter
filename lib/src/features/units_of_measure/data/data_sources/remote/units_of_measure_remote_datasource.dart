@@ -8,4 +8,11 @@ abstract class UnitsOfMeasureRemoteDataSource {
   Future<UnitOfMeasureModel> createUnitOfMeasure({
     required CreateUnitOfMeasureRequest request,
   });
+  Future<UnitOfMeasureModel> updateUnitOfMeasure({
+    required int id,
+    required CreateUnitOfMeasureRequest request,
+  });
+  Future<void> deleteUnitOfMeasure({
+    required int id,
+  });
 }

@@ -9,17 +9,25 @@ class ReceiptController extends StateNotifier<List<Receipt>> {
     return [
       Receipt(
         id: "SJ-136",
+        invoiceId: 136,
         paymentMethod: "Cash",
         date: DateTime.now(),
-        items: 1,
+        itemsCount: 1,
+        items: const [],
         amount: 4,
+        subtotal: 4,
+        taxTotal: 0,
       ),
       Receipt(
         id: "SJ-135",
+        invoiceId: 135,
         paymentMethod: "Cash",
         date: DateTime.now(),
-        items: 1,
+        itemsCount: 1,
+        items: const [],
         amount: 13,
+        subtotal: 13,
+        taxTotal: 0,
       ),
     ];
   }

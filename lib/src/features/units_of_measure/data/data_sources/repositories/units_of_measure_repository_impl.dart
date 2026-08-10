@@ -87,4 +87,26 @@ class UnitsOfMeasureRepositoryImpl
     )
         .toList();
   }
+
+  @override
+  Future<UnitOfMeasure> updateUnitOfMeasure({
+    required int id,
+    required String name,
+    required String abbreviation,
+  }) async {
+    final unit = await remoteDataSource.updateUnitOfMeasure(
+      id: id,
+      request: CreateUnitOfMeasureRequest(
+        name: name,
+        abbreviation: abbreviation,
+      ),
+    );
+    await localDataSource.saveUnitsOfMeasure([unit]);
+    return unit;
+  }
+
+  @override
+  Future<void> deleteUnitOfMeasure(int id) async {
+    await remoteDataSource.deleteUnitOfMeasure(id: id);
+  }
 }

@@ -7,4 +7,5 @@ import '../models/create_pos_invoice_dto.dart';
 abstract class ReceiptsRepository {
   FutureEither<List<Receipt>> getReceipts();
   FutureEither<void> createInvoice(CreatePosInvoiceDto payload);
+  FutureEither<void> cancelInvoice(int invoiceId);
 }

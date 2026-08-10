@@ -8,12 +8,14 @@ class UnitOfMeasureCard
     required this.abbreviation,
     required this.isActive,
     this.onTap,
+    this.onDelete,
   });
 
   final String name;
   final String abbreviation;
   final bool isActive;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(
@@ -99,6 +101,7 @@ class UnitOfMeasureCard
                           .textTheme
                           .titleSmall
                           ?.copyWith(
+                        color: Colors.black,
                         fontWeight:
                         FontWeight.w700,
                       ),
@@ -158,13 +161,15 @@ class UnitOfMeasureCard
                 crossAxisAlignment:
                 CrossAxisAlignment.end,
                 children: [
-
-                  Icon(
-                    FlutterRemix.close_line,
-                    size: 16,
-                    color: colorScheme
-                        .onSurfaceVariant,
-                  ),
+                  if (onDelete != null)
+                    IconButton(
+                      icon: Icon(
+                        FlutterRemix.delete_bin_line,
+                        size: 20,
+                        color: Colors.red.shade400,
+                      ),
+                      onPressed: onDelete,
+                    ),
                 ],
               ),
             ],

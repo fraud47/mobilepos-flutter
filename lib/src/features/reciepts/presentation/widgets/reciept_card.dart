@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobilepos/src/routing/app_routes.dart';
 import 'package:mobilepos/src/features/reciepts/presentation/widgets/reciept_amount.dart';
 import 'package:mobilepos/src/features/reciepts/presentation/widgets/reciept_icon.dart';
 
@@ -24,53 +26,58 @@ class ReceiptCard extends StatelessWidget {
 
 
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Row(
-          children: [
+      child: InkWell(
+        onTap: () {
+          context.push(AppRoutes.historicalReceiptDetail, extra: receipt);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
 
-            const ReceiptLeadingIcon(),
+              const ReceiptLeadingIcon(),
 
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
-                  Text(
-                    receipt.id,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  Text(
-                    "by ${receipt.paymentMethod}",
-                    style: const TextStyle(
-                      fontSize: 12,
-
+                    Text(
+                      receipt.id,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
 
-                  ),
+                    Text(
+                      "by ${receipt.paymentMethod}",
+                      style: const TextStyle(
+                        fontSize: 12,
 
-                  Text(
-                    "${receipt.items} Items",
-                    style:  TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600
+                      ),
 
                     ),
-                  ),
-                ],
+
+                    Text(
+                      "${receipt.itemsCount} Items",
+                      style:  TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600
+
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            ReceiptAmount(
-              amount: receipt.amount,
-            )
-          ],
+              ReceiptAmount(
+                amount: receipt.amount,
+              )
+            ],
+          ),
         ),
       ),
     );

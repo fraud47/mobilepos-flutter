@@ -11,4 +11,12 @@ abstract class UnitsOfMeasureRepository {
     required String name,
     required String abbreviation,
   });
+
+  Future<UnitOfMeasure> updateUnitOfMeasure({
+    required int id,
+    required String name,
+    required String abbreviation,
+  });
+
+  Future<void> deleteUnitOfMeasure(int id);
 }

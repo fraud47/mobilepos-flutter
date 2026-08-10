@@ -8,15 +8,39 @@ import 'package:mobilepos/src/features/inventory/presentation/screens/inventory_
 import 'package:mobilepos/src/features/inventory/presentation/widgets/inventory_card.dart';
 import '../providers/inventory_provider.dart';
 
-
-class InventoryPage extends ConsumerWidget {
+class InventoryPage extends ConsumerStatefulWidget {
   const InventoryPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+  ConsumerState<InventoryPage> createState() => _InventoryPageState();
+}
 
+class _InventoryPageState extends ConsumerState<InventoryPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  int? _selectedCatId;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final inventoryAsync = ref.watch(inventoryListProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -39,6 +63,7 @@ class InventoryPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search inventory',
                 hintStyle: TextStyle(
@@ -49,6 +74,12 @@ class InventoryPage extends ConsumerWidget {
                   FlutterRemix.search_line,
                   color: Colors.grey.shade700,
                 ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () => _searchController.clear(),
+                      )
+                    : null,
                 filled: true,
                 border: OutlineInputBorder(
                   borderSide: BorderSide.none,
@@ -66,17 +97,66 @@ class InventoryPage extends ConsumerWidget {
               ),
             ),
           ),
-
+          SizedBox(height: 10.h),
+          categoriesAsync.maybeWhen(
+            data: (cats) {
+              if (cats.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 38.h,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.w),
+                      child: ChoiceChip(
+                        label: const Text("All"),
+                        selected: _selectedCatId == null,
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedCatId = null;
+                          });
+                        },
+                      ),
+                    ),
+                    ...cats.map((cat) => Padding(
+                          padding: EdgeInsets.only(right: 8.w),
+                          child: ChoiceChip(
+                            label: Text(cat.name),
+                            selected: _selectedCatId == cat.id,
+                            onSelected: (_) {
+                              setState(() {
+                                _selectedCatId = _selectedCatId == cat.id ? null : cat.id;
+                              });
+                            },
+                          ),
+                        )),
+                  ],
+                ),
+              );
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
+          SizedBox(height: 10.h),
           Expanded(
             child: inventoryAsync.when(
               data: (products) {
-                if (products.isEmpty) {
+                final filtered = products.where((p) {
+                  final matchesCat = _selectedCatId == null || p.categoryId == _selectedCatId;
+                  final matchesQuery = _searchQuery.isEmpty ||
+                      p.name.toLowerCase().contains(_searchQuery) ||
+                      (p.sku != null && p.sku!.toLowerCase().contains(_searchQuery)) ||
+                      (p.category != null && p.category!.toLowerCase().contains(_searchQuery));
+                  return matchesCat && matchesQuery;
+                }).toList();
+
+                if (filtered.isEmpty) {
                   return const Center(child: Text('No inventory items found'));
                 }
                 return ListView.builder(
-                  itemCount: products.length,
+                  itemCount: filtered.length,
                   itemBuilder: (context, index) {
-                    final item = products[index];
+                    final item = filtered[index];
                     return GestureDetector(
                       onTap: () {
                         context.push(AppRoutes.inventoryPage, extra: item);
@@ -100,38 +180,6 @@ class InventoryPage extends ConsumerWidget {
         shape: const CircleBorder(),
         onPressed: () => InventoryActions.show(context),
         child: const Icon(FlutterRemix.add_box_line, color: Colors.black, size: 28),
-      ),
-    );
-  }
-}
-
-class InventoryCategory extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const InventoryCategory({
-    super.key,
-    required this.icon,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 18),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: Colors.grey,
-          ),
-          const SizedBox(height: 8),
-          Text(title,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              )),
-        ],
       ),
     );
   }

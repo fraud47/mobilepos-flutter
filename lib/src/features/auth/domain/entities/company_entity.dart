@@ -7,6 +7,7 @@ class CompanyEntity {
   final int branchCount;
   final String subscriptionStatus;
   final String subscriptionPlan;
+  final DateTime? trialEndsAt;
 
   const CompanyEntity({
     required this.tenantId,
@@ -17,5 +18,6 @@ class CompanyEntity {
     required this.branchCount,
     required this.subscriptionStatus,
     required this.subscriptionPlan,
+    this.trialEndsAt,
   });
 }

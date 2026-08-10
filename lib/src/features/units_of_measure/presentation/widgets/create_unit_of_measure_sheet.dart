@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../imports/core_imports.dart';
+import '../../domain/entities/unit_of_measure.dart';
 import '../providers/create_unit_provider.dart';
 import '../providers/unit_of_measure_form_provider.dart';
 
@@ -8,8 +9,10 @@ class CreateUnitOfMeasureSheet
     extends ConsumerStatefulWidget {
   const CreateUnitOfMeasureSheet({
     super.key,
+    this.initialUnit,
   });
 
+  final UnitOfMeasure? initialUnit;
 
   @override
   ConsumerState<
@@ -34,10 +37,17 @@ class _CreateUnitOfMeasureSheetState
     super.initState();
 
     _nameController =
-        TextEditingController();
+        TextEditingController(text: widget.initialUnit?.name ?? '');
 
     _abbreviationController =
-        TextEditingController();
+        TextEditingController(text: widget.initialUnit?.abbreviation ?? '');
+
+    // Set initial values in provider without triggering listeners yet
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifier = ref.read(unitOfMeasureFormProvider.notifier);
+      notifier.setName(_nameController.text);
+      notifier.setAbbreviation(_abbreviationController.text);
+    });
 
     _nameController.addListener(() {
       ref
@@ -80,14 +90,26 @@ class _CreateUnitOfMeasureSheetState
       unitOfMeasureFormProvider,
     );
 
-    await ref
-        .read(createUnitProvider.notifier)
-        .create(
-      name: form.name.trim(),
-      abbreviation: form.abbreviation
-          .trim()
-          .toLowerCase(),
-    );
+    if (widget.initialUnit != null) {
+      await ref
+          .read(createUnitProvider.notifier)
+          .updateUnit(
+        id: widget.initialUnit!.id,
+        name: form.name.trim(),
+        abbreviation: form.abbreviation
+            .trim()
+            .toLowerCase(),
+      );
+    } else {
+      await ref
+          .read(createUnitProvider.notifier)
+          .create(
+        name: form.name.trim(),
+        abbreviation: form.abbreviation
+            .trim()
+            .toLowerCase(),
+      );
+    }
   } 
   @override
   Widget build(
@@ -209,7 +231,7 @@ class _CreateUnitOfMeasureSheetState
                       children: [
 
                         Text(
-                          'Create unit',
+                          widget.initialUnit == null ? 'Create unit' : 'Update unit',
                           style: theme
                               .textTheme
                               .titleLarge
@@ -220,7 +242,7 @@ class _CreateUnitOfMeasureSheetState
                         ),
 
                         Text(
-                          'Add a new unit of measure',
+                          widget.initialUnit == null ? 'Add a new unit of measure' : 'Edit this unit of measure',
                           style: theme
                               .textTheme
                               .bodySmall
@@ -378,8 +400,8 @@ class _CreateUnitOfMeasureSheetState
                       strokeWidth: 2.5,
                     ),
                   )
-                      : const Text(
-                    'Create unit',
+                      : Text(
+                    widget.initialUnit == null ? 'Create unit' : 'Update unit',
                   ),
                 ),
               ),

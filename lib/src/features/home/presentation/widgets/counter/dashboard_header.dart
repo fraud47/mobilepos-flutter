@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_remix/flutter_remix.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
 
-class CounterDashboardHeader extends StatelessWidget {
+class CounterDashboardHeader extends ConsumerWidget {
   const CounterDashboardHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeBranch = ref.watch(activeBranchProvider);
+    final branchName = activeBranch?.name ?? 'No Branch Selected';
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -16,7 +22,8 @@ class CounterDashboardHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24.r,
-            child: const Icon(Icons.person),
+            backgroundColor: Colors.blue.shade50,
+            child: Icon(FlutterRemix.building_2_fill, color: Colors.blue.shade700),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -24,7 +31,7 @@ class CounterDashboardHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'cart',
+                  'Counter',
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
@@ -32,10 +39,11 @@ class CounterDashboardHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Main Branch',
+                  branchName,
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],

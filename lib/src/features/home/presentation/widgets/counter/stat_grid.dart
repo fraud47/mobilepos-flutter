@@ -20,7 +20,7 @@ class CounterStatsGrid extends ConsumerWidget {
 
         final todaySales = todayReceipts.fold<double>(0.0, (sum, r) => sum + r.amount);
         final transactions = todayReceipts.length;
-        final itemsSold = todayReceipts.fold<int>(0, (sum, r) => sum + r.items);
+        final itemsSold = todayReceipts.fold<int>(0, (sum, r) => sum + r.itemsCount);
 
         return GridView.count(
           shrinkWrap: true,

@@ -52,6 +52,34 @@ class _VariantCardState extends State<VariantCard> {
 
     lowStockController =
         TextEditingController(text: widget.variant.lowStock.toString());
+
+    sellingController.addListener(() {
+      widget.variant.sellingPrice = double.tryParse(sellingController.text) ?? 0.0;
+    });
+
+    costController.addListener(() {
+      widget.variant.costPrice = double.tryParse(costController.text) ?? 0.0;
+    });
+
+    stockController.addListener(() {
+      widget.variant.stock = int.tryParse(stockController.text) ?? 0;
+    });
+
+    skuController.addListener(() {
+      widget.variant.sku = skuController.text;
+    });
+
+    barcodeController.addListener(() {
+      widget.variant.barcode = barcodeController.text;
+    });
+
+    variantController.addListener(() {
+      widget.variant.name = variantController.text;
+    });
+
+    lowStockController.addListener(() {
+      widget.variant.lowStock = int.tryParse(lowStockController.text) ?? 5;
+    });
   }
 
   @override

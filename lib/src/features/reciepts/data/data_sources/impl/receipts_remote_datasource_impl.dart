@@ -53,4 +53,16 @@ class ReceiptsRemoteDataSourceImpl implements ReceiptsRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
+  @override
+  Future<void> cancelInvoice(int invoiceId) async {
+    try {
+      await dio.post('/api/v1/pos/invoices/$invoiceId/cancel');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to cancel invoice',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
 }

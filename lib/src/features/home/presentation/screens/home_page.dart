@@ -74,10 +74,8 @@ class HomePage extends ConsumerWidget {
   String _titleForTab(HomeTab tab) {
     return switch (tab) {
       HomeTab.reports => 'Reports',
-      HomeTab.today => 'Today',
       HomeTab.counter => 'Counter',
       HomeTab.items => 'Items',
-      HomeTab.more => 'More',
     };
   }
 }

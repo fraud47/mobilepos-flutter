@@ -40,19 +40,64 @@ class BranchesScreen extends ConsumerWidget {
               return ListTile(
                 title: Text(branch.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text('Code: ${branch.code ?? 'N/A'}'),
-                trailing: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: branch.isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                  child: Text(
-                    branch.isActive ? 'Active' : 'Inactive',
-                    style: TextStyle(
-                      color: branch.isActive ? Colors.green : Colors.red,
-                      fontSize: 12.sp,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: branch.isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        branch.isActive ? 'Active' : 'Inactive',
+                        style: TextStyle(
+                          color: branch.isActive ? Colors.green : Colors.red,
+                          fontSize: 12.sp,
+                        ),
+                      ),
                     ),
-                  ),
+                    IconButton(
+                      icon: const Icon(FlutterRemix.edit_line, size: 20),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => CreateBranchDialog(initialBranch: branch),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(FlutterRemix.delete_bin_line, size: 20, color: Colors.red.shade400),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Branch'),
+                            content: Text('Are you sure you want to delete ${branch.name}?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true && context.mounted) {
+                          final success = await ref.read(createBranchControllerProvider.notifier).deleteBranch(branch.id);
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Branch deleted')),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ],
                 ),
               );
             },

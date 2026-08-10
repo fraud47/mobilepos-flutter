@@ -20,4 +20,7 @@ abstract final class AppRoutes {
   static const String addUser = '/add-user';
   static const String unitOfMeasure = '/unit-of-measure';
   static const String branchesManagement = '/branches-management';
+  static const String manageCategories = '/manage-categories';
+  static const String historicalReceiptDetail = '/historical-receipt-detail';
+  static const String profile = '/profile';
 }

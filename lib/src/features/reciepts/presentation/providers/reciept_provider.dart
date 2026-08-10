@@ -23,3 +23,31 @@ final receiptProvider = FutureProvider<List<Receipt>>((ref) async {
     },
   );
 });
+
+class CancelReceiptNotifier extends StateNotifier<AsyncValue<void>> {
+  final ReceiptsRepository _repository;
+  final Ref _ref;
+
+  CancelReceiptNotifier(this._repository, this._ref) : super(const AsyncValue.data(null));
+
+  Future<bool> cancelReceipt(int invoiceId) async {
+    state = const AsyncValue.loading();
+    final result = await _repository.cancelInvoice(invoiceId);
+
+    return result.fold(
+      (failure) {
+        state = AsyncValue.error(failure.message, StackTrace.current);
+        return false;
+      },
+      (_) {
+        state = const AsyncValue.data(null);
+        _ref.invalidate(receiptProvider);
+        return true;
+      },
+    );
+  }
+}
+
+final cancelReceiptControllerProvider = StateNotifierProvider<CancelReceiptNotifier, AsyncValue<void>>((ref) {
+  return CancelReceiptNotifier(ref.watch(receiptsRepositoryProvider), ref);
+});

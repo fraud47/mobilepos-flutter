@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/unit_of_measure.dart';
 import 'create_unit_of_measure_sheet.dart';
-
 
 Future<bool?> showCreateUnitOfMeasureSheet(
     BuildContext context, {
-      required Future<void> Function(
-          String name,
-          String abbreviation,
-          bool isActive,
-          ) onSubmit,
+      UnitOfMeasure? initialUnit,
     }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -27,7 +23,7 @@ Future<bool?> showCreateUnitOfMeasureSheet(
           top: Radius.circular(28),
         ),
         child:
-        const CreateUnitOfMeasureSheet(),
+        CreateUnitOfMeasureSheet(initialUnit: initialUnit),
       );
     },
   );

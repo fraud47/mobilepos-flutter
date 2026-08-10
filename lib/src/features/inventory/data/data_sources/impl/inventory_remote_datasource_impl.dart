@@ -46,6 +46,8 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   @override
   Future<InventoryItem> createProduct(Map<String, dynamic> payload) async {
     try {
+      print('=== SENDING CREATE PRODUCT PAYLOAD ===');
+      print(payload);
       final response = await dio.post('/api/v1/products', data: payload);
       final responseData = response.data;
       if (responseData != null && responseData['data'] != null) {
@@ -62,12 +64,96 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
   }
 
   @override
+  Future<InventoryItem> updateProduct(String id, Map<String, dynamic> payload) async {
+    try {
+      final response = await dio.put('/api/v1/products/$id', data: payload);
+      final responseData = response.data;
+      if (responseData != null && responseData['data'] != null) {
+        return InventoryItem.fromJson(responseData['data']);
+      }
+      throw const ServerException(message: 'Invalid response from server');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to update product',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
   Future<void> deleteProduct(String id) async {
     try {
       await dio.delete('/api/v1/products/$id');
     } on DioException catch (e) {
       throw ServerException(
         message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to delete product',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<List<dynamic>> getCategories() async {
+    try {
+      final response = await dio.get('/api/v1/categories');
+      final responseData = response.data;
+      if (responseData != null && responseData['data'] is List) {
+        return responseData['data'] as List<dynamic>;
+      }
+      return [];
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to fetch categories',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<dynamic> createCategory(String name) async {
+    try {
+      final response = await dio.post('/api/v1/categories', data: {'name': name});
+      final responseData = response.data;
+      if (responseData != null && responseData['data'] != null) {
+        return responseData['data'];
+      }
+      throw const ServerException(message: 'Invalid response from server');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to create category',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+  @override
+  Future<dynamic> updateCategory(int id, String name) async {
+    try {
+      final response = await dio.put('/api/v1/categories/$id', data: {'name': name});
+      final responseData = response.data;
+      if (responseData != null && responseData['data'] != null) {
+        return responseData['data'];
+      }
+      throw const ServerException(message: 'Invalid response from server');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to update category',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteCategory(int id) async {
+    try {
+      await dio.delete('/api/v1/categories/$id');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to delete category',
       );
     } catch (e) {
       throw ServerException(message: e.toString());

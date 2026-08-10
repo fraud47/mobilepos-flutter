@@ -83,6 +83,41 @@ class CreateBranchController extends StateNotifier<AsyncValue<void>> {
       },
     );
   }
+
+  Future<bool> updateBranch(int branchId, String name, String? code) async {
+    state = const AsyncLoading();
+    final dto = CreateBranchDto(name: name, code: code);
+    final result = await _repository.updateBranch(branchId, dto);
+
+    return result.fold(
+      (failure) {
+        state = AsyncError(failure.message, StackTrace.current);
+        return false;
+      },
+      (_) {
+        state = const AsyncData(null);
+        _ref.invalidate(branchesProvider);
+        return true;
+      },
+    );
+  }
+
+  Future<bool> deleteBranch(int branchId) async {
+    state = const AsyncLoading();
+    final result = await _repository.deleteBranch(branchId);
+
+    return result.fold(
+      (failure) {
+        state = AsyncError(failure.message, StackTrace.current);
+        return false;
+      },
+      (_) {
+        state = const AsyncData(null);
+        _ref.invalidate(branchesProvider);
+        return true;
+      },
+    );
+  }
 }
 
 final createBranchControllerProvider =

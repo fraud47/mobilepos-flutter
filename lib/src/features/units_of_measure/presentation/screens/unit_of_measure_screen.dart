@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/unit_of_measure_bottom_sheet.dart';
+import '../providers/create_unit_provider.dart';
 import '../providers/unit_of_measure_provider.dart';
 import '../widgets/unit_of_measure_card.dart';
 
@@ -22,6 +23,7 @@ class UnitsOfMeasureScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text(
           'Units of Measure',
+          style: TextStyle(color: Colors.black),
         ),
         actions: [
           IconButton(
@@ -33,6 +35,7 @@ class UnitsOfMeasureScreen extends ConsumerWidget {
             },
             icon: const Icon(
               Icons.refresh_rounded,
+              color: Colors.black,
             ),
           ),
           const SizedBox(width: 8),
@@ -104,9 +107,42 @@ class UnitsOfMeasureScreen extends ConsumerWidget {
                     unit.abbreviation,
                     isActive:
                     unit.isActive,
-                    onTap: () {
-                      // TODO:
-                      // Open edit/details screen
+                    onTap: () async {
+                      final updated = await showCreateUnitOfMeasureSheet(
+                        context,
+                        initialUnit: unit,
+                      );
+                      if (updated == true && context.mounted) {
+                        ref.invalidate(unitsOfMeasureProvider);
+                      }
+                    },
+                    onDelete: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Unit'),
+                          content: Text('Are you sure you want to delete ${unit.name}?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true && context.mounted) {
+                        await ref.read(createUnitProvider.notifier).deleteUnit(unit.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Unit deleted')),
+                          );
+                        }
+                      }
                     },
                   ),
                 );
@@ -123,27 +159,6 @@ class UnitsOfMeasureScreen extends ConsumerWidget {
           final created =
           await showCreateUnitOfMeasureSheet(
             context,
-            onSubmit: (
-                name,
-                abbreviation,
-                isActive,
-                ) async {
-              // Call your repository/controller here.
-              //
-              // Example:
-              //
-              // await ref
-              //     .read(
-              //       unitOfMeasureControllerProvider
-              //           .notifier,
-              //     )
-              //     .createUnitOfMeasure(
-              //       name: name,
-              //       abbreviation:
-              //           abbreviation,
-              //       isActive: isActive,
-              //     );
-            },
           );
 
           if (created == true &&

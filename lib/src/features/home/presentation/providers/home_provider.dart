@@ -12,7 +12,7 @@ final homeControllerProvider =
   return HomeController();
 });
 
-enum HomeTab { reports, today, counter, items, more }
+enum HomeTab { reports, counter, items }
 
 class HomeState {
   final HomeTab selectedTab;

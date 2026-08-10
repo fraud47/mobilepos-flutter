@@ -11,6 +11,7 @@ import '../widgets/variant_card.dart';
 import '../../domain/entities/inventory_item.dart';
 
 import '../providers/inventory_provider.dart';
+import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   final InventoryItem? item;
@@ -27,7 +28,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
-  String category = "General";
+  int? selectedCategoryId;
   String sellBy = "Unit";
 
   bool favourite = false;
@@ -37,14 +38,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       name: 'Default',
       sellingPrice: 3.50,
       costPrice: 2.00,
-      stock: 44,
-      sku: 'SKU001',
-      barcode: '6001234567890',
+      stock: 0,
+      sku: '',
+      barcode: '',
       lowStock: 5,
-      wholesalePrices: [
-        WholesalePrice(quantity: 6, price: 3.20),
-        WholesalePrice(quantity: 12, price: 3.00),
-      ],
+      wholesalePrices: [],
     )
   ];
 
@@ -52,8 +50,24 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   void initState() {
     super.initState();
     if (widget.item != null) {
-      nameController.text = widget.item!.name;
-      // You can extract and set other fields like variants from widget.item here
+      final item = widget.item!;
+      nameController.text = item.name;
+      descriptionController.text = item.description ?? '';
+      selectedCategoryId = item.categoryId;
+      variants = [
+        ProductVariant(
+          name: 'Default',
+          sellingPrice: item.price,
+          costPrice: item.costPrice ?? 0.0,
+          stock: item.stock,
+          sku: item.sku ?? '',
+          barcode: item.barcode ?? '',
+          lowStock: 5,
+          wholesalePrices: item.wholesalePrices
+              .map((w) => WholesalePrice(quantity: w.minimumQuantity, price: w.price))
+              .toList(),
+        ),
+      ];
     } else {
       nameController.text = '';
       descriptionController.text = '';
@@ -79,14 +93,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       };
     }).toList();
 
+    final activeBranch = ref.read(activeBranchProvider);
+    final branchId = activeBranch?.id;
+
     // The backend CreateProductDto expects these fields
     final payload = {
       'name': nameController.text.trim(),
       'description': descriptionController.text.trim(),
+      if (branchId != null) 'branchId': branchId,
       'sku': firstVariant.sku.isEmpty ? 'SKU-${DateTime.now().millisecondsSinceEpoch}' : firstVariant.sku,
       if (firstVariant.barcode.isNotEmpty) 'barcode': firstVariant.barcode,
       'sellingPrice': firstVariant.sellingPrice.toStringAsFixed(2),
       'costPrice': firstVariant.costPrice.toStringAsFixed(2),
+      'stock': firstVariant.stock,
+      if (selectedCategoryId != null) 'categoryId': selectedCategoryId,
       if (wholesaleTiers.isNotEmpty) 'wholesaleTiers': wholesaleTiers,
       // Pass remaining variants if they exist (optional, depends on backend handling)
       if (variants.length > 1) 
@@ -100,11 +120,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     };
 
     if (widget.item != null && widget.item!.id != null) {
-      // NOTE: Here you would call an updateProduct provider method 
-      // but for now we only have createProduct and deleteProduct
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Update item not implemented yet')),
-      );
+      ref.read(addProductProvider.notifier).updateProduct(widget.item!.id!, payload);
     } else {
       ref.read(addProductProvider.notifier).createProduct(payload);
     }
@@ -113,6 +129,68 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   void _deleteProduct() {
     if (widget.item != null && widget.item!.id != null) {
       ref.read(addProductProvider.notifier).deleteProduct(widget.item!.id!);
+    }
+  }
+
+  Future<void> _showCreateCategoryDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New Category'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Category Name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.pop(ctx, controller.text.trim());
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+
+    if (name != null && name.isNotEmpty) {
+      final repo = ref.read(inventoryRepositoryProvider);
+      final res = await repo.createCategory(name);
+      res.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(failure.message)),
+          );
+        },
+        (data) async {
+          ref.invalidate(categoriesProvider);
+          final newCatId = (data is Map && data['id'] != null) ? int.tryParse(data['id'].toString()) : null;
+          
+          try {
+            await ref.read(categoriesProvider.future);
+          } catch (_) {}
+
+          if (mounted) {
+            setState(() {
+              if (newCatId != null) {
+                selectedCategoryId = newCatId;
+              }
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Category "$name" created!')),
+            );
+          }
+        },
+      );
     }
   }
 
@@ -126,7 +204,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       next.when(
         data: (_) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Product added successfully!')),
+            const SnackBar(content: Text('Product saved successfully!')),
           );
           Navigator.pop(context);
         },
@@ -150,7 +228,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         title: Text(
           'Manage Item',
           style: TextStyle(
-            color: cs.primary,
+            color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18.sp,
           ),
@@ -209,13 +287,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ProductInfoCard(
               nameController: nameController,
               descriptionController: descriptionController,
-              category: category,
+              selectedCategoryId: selectedCategoryId,
+              categories: ref.watch(categoriesProvider).maybeWhen(
+                data: (cats) => cats,
+                orElse: () => const [],
+              ),
               sellBy: sellBy,
               onCategoryChanged: (value) {
                 setState(() {
-                  category = value;
+                  selectedCategoryId = value;
                 });
               },
+              onAddNewCategory: () => _showCreateCategoryDialog(context),
               onSellByChanged: (value) {
                 setState(() {
                   sellBy = value;

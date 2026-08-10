@@ -87,4 +87,41 @@ class UnitsOfMeasureRemoteDataSourceImpl
       );
     }
   }
+
+  @override
+  Future<UnitOfMeasureModel> updateUnitOfMeasure({
+    required int id,
+    required CreateUnitOfMeasureRequest request,
+  }) async {
+    try {
+      final response = await dio.put<Map<String, dynamic>>(
+        '/api/v1/units-of-measure/$id',
+        data: request.toJson(),
+      );
+      return UnitOfMeasureModel.fromJson(response.data!['data']);
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ??
+            e.message ??
+            'Unable to update unit of measure',
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteUnitOfMeasure({
+    required int id,
+  }) async {
+    try {
+      await dio.delete<Map<String, dynamic>>(
+        '/api/v1/units-of-measure/$id',
+      );
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ??
+            e.message ??
+            'Unable to delete unit of measure',
+      );
+    }
+  }
 }

@@ -47,4 +47,34 @@ class BranchRemoteDataSourceImpl implements BranchRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
+
+  @override
+  Future<BranchModel> updateBranch(int branchId, CreateBranchDto dto) async {
+    try {
+      final response = await dio.put(
+        '/api/v1/branches/$branchId',
+        data: dto.toJson(),
+      );
+      return BranchModel.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to update branch',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteBranch(int branchId) async {
+    try {
+      await dio.delete('/api/v1/branches/$branchId');
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'Failed to delete branch',
+      );
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
 }

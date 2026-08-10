@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../domain/entities/product_category.dart';
 
 class ProductInfoCard extends StatelessWidget {
   const ProductInfoCard({
     super.key,
     required this.nameController,
     required this.descriptionController,
-    required this.category,
+    required this.selectedCategoryId,
+    required this.categories,
     required this.sellBy,
     required this.onCategoryChanged,
+    required this.onAddNewCategory,
     required this.onSellByChanged,
   });
 
   final TextEditingController nameController;
   final TextEditingController descriptionController;
 
-  final String category;
+  final int? selectedCategoryId;
+  final List<ProductCategory> categories;
   final String sellBy;
 
-  final ValueChanged<String> onCategoryChanged;
+  final ValueChanged<int?> onCategoryChanged;
+  final VoidCallback onAddNewCategory;
   final ValueChanged<String> onSellByChanged;
 
   @override
@@ -41,41 +46,41 @@ class ProductInfoCard extends StatelessWidget {
         SizedBox(height: 14.h),
         _sectionCard(
           children: [
-            _title("Category *"),
-            SizedBox(height: 10.h),
-            DropdownButtonFormField<String>(
-              icon: Icon(FlutterRemix.arrow_down_s_line),
-              value: category,
-              decoration: _decoration(
-                "",
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: "General",
-                  child: Text("General"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _title("Category"),
+                TextButton.icon(
+                  onPressed: onAddNewCategory,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text("New Category", style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: "Hair",
-                  child: Text("Hair"),
+              ],
+            ),
+            SizedBox(height: 6.h),
+            DropdownButtonFormField<int?>(
+              icon: const Icon(FlutterRemix.arrow_down_s_line),
+              value: categories.any((c) => c.id == selectedCategoryId) ? selectedCategoryId : null,
+              decoration: _decoration("Select Category"),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text("Uncategorized"),
                 ),
-                DropdownMenuItem(
-                  value: "Food",
-                  child: Text("Food"),
-                ),
-                DropdownMenuItem(
-                  value: "Drinks",
-                  child: Text("Drinks"),
-                ),
-                DropdownMenuItem(
-
-                  value: "Electronics",
-                  child: Text("Electronics"),
+                ...categories.map(
+                  (cat) => DropdownMenuItem<int?>(
+                    value: cat.id,
+                    child: Text(cat.name),
+                  ),
                 ),
               ],
               onChanged: (value) {
-                if (value != null) {
-                  onCategoryChanged(value);
-                }
+                onCategoryChanged(value);
               },
             ),
           ],
@@ -88,9 +93,7 @@ class ProductInfoCard extends StatelessWidget {
             DropdownButtonFormField<String>(
               value: sellBy,
               icon: const Icon(FlutterRemix.arrow_down_s_line),
-              decoration: _decoration(
-                "",
-              ),
+              decoration: _decoration(""),
               items: const [
                 DropdownMenuItem(
                   value: "Unit",

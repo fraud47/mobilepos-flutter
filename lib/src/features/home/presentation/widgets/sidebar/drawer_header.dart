@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_remix/flutter_remix.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobilepos/src/routing/app_routes.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../branches/presentation/providers/branch_provider.dart';
 import '../../../../branches/domain/entities/branch.dart';
 import '../../providers/home_provider.dart';
+
 
 class HeaderDrawer extends ConsumerWidget {
   const HeaderDrawer({
@@ -72,8 +75,12 @@ class HeaderDrawer extends ConsumerWidget {
           // COMPANY + USER DETAILS
           // =====================================================
 
-          Container(
+          Material(
             color: Colors.white,
+            child: InkWell(
+              onTap: () => context.push(AppRoutes.profile),
+              child: Container(
+            color: Colors.transparent,
             padding: EdgeInsets.only(
               top: 10.h,
               left: 16.w,
@@ -225,10 +232,23 @@ class HeaderDrawer extends ConsumerWidget {
                           );
                         },
                       ),
+                      SizedBox(height: 8.h),
+                      // "View Profile" hint
+                      Row(
+                        children: [
+                          Icon(FlutterRemix.user_line, size: 12.sp, color: Colors.grey.shade500),
+                          SizedBox(width: 4.w),
+                          Text('View Profile', style: TextStyle(fontSize: 10.sp, color: Colors.grey.shade500)),
+                          SizedBox(width: 2.w),
+                          Icon(FlutterRemix.arrow_right_s_line, size: 12.sp, color: Colors.grey.shade400),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ],
+            ),
+          ),
             ),
           ),
         ],

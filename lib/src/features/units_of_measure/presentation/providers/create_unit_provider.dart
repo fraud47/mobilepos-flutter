@@ -38,4 +38,30 @@ class CreateUnitNotifier
       );
     });
   }
+
+  Future<void> updateUnit({
+    required int id,
+    required String name,
+    required String abbreviation,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(unitsOfMeasureRepositoryProvider);
+      await repository.updateUnitOfMeasure(
+        id: id,
+        name: name,
+        abbreviation: abbreviation,
+      );
+      ref.invalidate(unitsOfMeasureProvider);
+    });
+  }
+
+  Future<void> deleteUnit(int id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(unitsOfMeasureRepositoryProvider);
+      await repository.deleteUnitOfMeasure(id);
+      ref.invalidate(unitsOfMeasureProvider);
+    });
+  }
 }
