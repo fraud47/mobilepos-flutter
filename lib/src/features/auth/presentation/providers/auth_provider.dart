@@ -117,17 +117,35 @@ enum SessionStatus {
 class SessionState {
   final SessionStatus status;
   final AuthSessionEntity? session;
+  final bool isLocked;
+  final bool hasPin;
 
   const SessionState({
     this.status = SessionStatus.unknown,
     this.session,
+    this.isLocked = false,
+    this.hasPin = false,
   });
+
+  SessionState copyWith({
+    SessionStatus? status,
+    AuthSessionEntity? session,
+    bool? isLocked,
+    bool? hasPin,
+  }) {
+    return SessionState(
+      status: status ?? this.status,
+      session: session ?? this.session,
+      isLocked: isLocked ?? this.isLocked,
+      hasPin: hasPin ?? this.hasPin,
+    );
+  }
 
   bool get isLoading =>
       status == SessionStatus.unknown;
 
   bool get isAuthenticated =>
-      status == SessionStatus.authenticated;
+      status == SessionStatus.authenticated && !isLocked;
 
   bool get isUnauthenticated =>
       status == SessionStatus.unauthenticated;
@@ -457,6 +475,48 @@ class SessionNotifier
     );
   }
 
+
+  // ===========================================================================
+  // OFFLINE PIN & LOCK REGISTER
+  // ===========================================================================
+
+  void lockRegister() {
+    state = state.copyWith(isLocked: true);
+    debugPrint('SESSION: POS Register locked');
+  }
+
+  Future<bool> setOfflinePin(String pin) async {
+    final storage = AuthSecureStorage();
+    await storage.saveOfflinePin(pin);
+    state = state.copyWith(hasPin: true);
+    debugPrint('SESSION: Saved new 4-digit offline PIN');
+    return true;
+  }
+
+  Future<bool> unlockWithPin(String enteredPin) async {
+    final storage = AuthSecureStorage();
+    final savedPin = await storage.getOfflinePin();
+
+    if (savedPin == null || savedPin.isEmpty) {
+      // Default initial PIN if none is set yet: '1234'
+      if (enteredPin == '1234') {
+        await storage.saveOfflinePin('1234');
+        state = state.copyWith(isLocked: false, hasPin: true);
+        debugPrint('SESSION: Register unlocked with default PIN');
+        return true;
+      }
+      return false;
+    }
+
+    if (enteredPin == savedPin) {
+      state = state.copyWith(isLocked: false);
+      debugPrint('SESSION: Register unlocked with offline PIN');
+      return true;
+    }
+
+    debugPrint('SESSION: Incorrect offline PIN entered');
+    return false;
+  }
 
   // ===========================================================================
   // PERMISSION CHECK

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobilepos/src/imports/core_imports.dart';
 import 'package:mobilepos/src/features/auth/presentation/widgets/session_activity_manager.dart';
+import 'package:mobilepos/src/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobilepos/src/features/auth/presentation/screens/pin_lock_screen.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -11,6 +13,7 @@ class App extends ConsumerWidget {
       WidgetRef ref,
       ) {
     final router = ref.watch(appRouterProvider);
+    final sessionState = ref.watch(sessionProvider);
 
     return SessionActivityManager(
       child: ScreenUtilWrapper(
@@ -24,9 +27,15 @@ class App extends ConsumerWidget {
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           builder: (context, child) {
-            return SkeletonWrapper(
+            final appChild = SkeletonWrapper(
               child: child ?? const SizedBox.shrink(),
             );
+
+            if (sessionState.isLocked) {
+              return const PinLockScreen();
+            }
+
+            return appChild;
           },
         ),
       ),

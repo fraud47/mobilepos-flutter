@@ -5,6 +5,7 @@ import 'package:flutter_remix/flutter_remix.dart';
 import 'package:mobilepos/src/extensions/context_extension.dart';
 import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
 import 'package:mobilepos/src/features/home/presentation/providers/home_provider.dart';
+import 'package:mobilepos/src/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobilepos/src/features/inventory/domain/entities/inventory_item.dart';
 
 // ---------------------------------------------------------------------------
@@ -150,37 +151,57 @@ class _POSHeader extends ConsumerWidget {
               ),
             ),
 
-            // Status badge
-            Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFF22C55E),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6.w,
-                    height: 6.w,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+            // Status badge & Lock button
+            Row(
+              children: [
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6.w,
+                        height: 6.w,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'OPEN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                GestureDetector(
+                  onTap: () => ref.read(sessionProvider.notifier).lockRegister(),
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'OPEN',
-                    style: TextStyle(
+                    child: Icon(
+                      FlutterRemix.lock_2_line,
                       color: Colors.white,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
+                      size: 16.sp,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),

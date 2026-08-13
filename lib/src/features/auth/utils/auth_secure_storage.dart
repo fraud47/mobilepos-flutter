@@ -14,6 +14,9 @@ class AuthSecureStorage {
   static const refreshTokenKey =
       'auth_refresh_token';
 
+  static const offlinePinKey =
+      'auth_offline_pin';
+
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
@@ -41,6 +44,30 @@ class AuthSecureStorage {
     );
   }
 
+  Future<void> saveOfflinePin(String pin) async {
+    await _storage.write(
+      key: offlinePinKey,
+      value: pin,
+    );
+  }
+
+  Future<String?> getOfflinePin() {
+    return _storage.read(
+      key: offlinePinKey,
+    );
+  }
+
+  Future<bool> hasOfflinePin() async {
+    final pin = await getOfflinePin();
+    return pin != null && pin.isNotEmpty;
+  }
+
+  Future<void> clearOfflinePin() async {
+    await _storage.delete(
+      key: offlinePinKey,
+    );
+  }
+
   Future<void> clearTokens() async {
     await _storage.delete(
       key: accessTokenKey,
@@ -49,5 +76,7 @@ class AuthSecureStorage {
     await _storage.delete(
       key: refreshTokenKey,
     );
+
+    await clearOfflinePin();
   }
 }
