@@ -37,7 +37,8 @@ class HomePage extends ConsumerWidget {
         body: isCartPage
             ? HomeTabBody(
                 state: state,
-                onNewSale: controller.startNewSale,
+                onCheckout: controller.proceedToCheckout,
+                onBackToCounter: controller.backToCounter,
                 onProductSelected: controller.addProduct,
                 onClearCart: controller.clearCart,
                 onIncrementProduct: controller.incrementProduct,
@@ -47,16 +48,21 @@ class HomePage extends ConsumerWidget {
               )
             : Column(
                 children: [
-                  HomeHeader(
-                    onMenuPressed: () => scaffoldKey.currentState?.openDrawer(),
-                    title: title,
-                    selectedTab: state.selectedTab,
-                    onNewSale: controller.startNewSale,
-                  ),
+                  // The Counter tab has its own integrated POS header;
+                  // show the app-level header only for other tabs.
+                  if (state.selectedTab != HomeTab.counter)
+                    HomeHeader(
+                      onMenuPressed: () =>
+                          scaffoldKey.currentState?.openDrawer(),
+                      title: title,
+                      selectedTab: state.selectedTab,
+                      onNewSale: controller.startNewSale,
+                    ),
                   Expanded(
                     child: HomeTabBody(
                       state: state,
-                      onNewSale: controller.startNewSale,
+                      onCheckout: controller.proceedToCheckout,
+                      onBackToCounter: controller.backToCounter,
                       onProductSelected: controller.addProduct,
                       onClearCart: controller.clearCart,
                       onIncrementProduct: controller.incrementProduct,

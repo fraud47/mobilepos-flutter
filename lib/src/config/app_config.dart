@@ -187,17 +187,13 @@ class AppConfig {
   // REFRESH TOKEN
   // --------------------------------------------------
 
-  static Future<String?>
-  _refreshAccessTokenOnce() async {
-
-    // If another request is already
-    // refreshing the token, wait for it.
+  static Future<String?> _refreshAccessTokenOnce() async {
+    // If another request is already refreshing, wait for it.
     if (_refreshFuture != null) {
       return await _refreshFuture;
     }
 
-    _refreshFuture =
-        _refreshAccessToken();
+    _refreshFuture = _doRefreshTokens();
 
     try {
       return await _refreshFuture;
@@ -206,47 +202,39 @@ class AppConfig {
     }
   }
 
-  static Future<String?>
-  _refreshAccessToken() async {
+  /// Exchanges the stored refresh token for a new access + refresh token pair,
+  /// then persists BOTH tokens so the next refresh cycle works correctly.
+  ///
+  /// The backend uses **refresh token rotation**: each call to /auth/refresh-token
+  /// invalidates the old refresh token and issues a brand-new one.  If we only
+  /// saved the access token (the previous bug), the very next refresh would send
+  /// a revoked token and get a 401, silently logging the user out.
+  static Future<String?> _doRefreshTokens() async {
     try {
-      final refreshToken =
-      await authLocalDataSource
-          .getRefreshToken();
+      final storedRefreshToken =
+          await authLocalDataSource.getRefreshToken();
 
-      if (refreshToken == null ||
-          refreshToken.isEmpty) {
-        AppLogger.info(
-          '🔐 No refresh token available',
-        );
-
+      if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
+        AppLogger.info('🔐 No refresh token stored — skipping refresh');
         return null;
       }
 
-      AppLogger.info(
-        '🔄 Refreshing access token...',
+      AppLogger.info('🔄 Refreshing tokens (rotation)...');
+
+      final result = await authRemoteDataSource.refreshTokens(
+        refreshToken: storedRefreshToken,
       );
 
-      final newAccessToken =
-      await authRemoteDataSource
-          .refreshAccessToken(
-        refreshToken: refreshToken,
+      // Save BOTH tokens atomically so the new refresh token is never lost.
+      await authLocalDataSource.updateTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       );
 
-      await authLocalDataSource
-          .updateAccessToken(
-        newAccessToken,
-      );
-
-      AppLogger.info(
-        '✅ Access token refreshed successfully',
-      );
-
-      return newAccessToken;
+      AppLogger.info('✅ Tokens refreshed and rotated successfully');
+      return result.accessToken;
     } catch (e) {
-      AppLogger.error(
-        '❌ Failed to refresh access token: $e',
-      );
-
+      AppLogger.error('❌ Failed to refresh tokens: $e');
       return null;
     }
   }
@@ -255,11 +243,8 @@ class AppConfig {
   // CHECK REFRESH REQUEST
   // --------------------------------------------------
 
-  static bool _isRefreshRequest(
-      RequestOptions options,
-      ) {
-    return options.path ==
-        '/api/v1/auth/refresh-token';
+  static bool _isRefreshRequest(RequestOptions options) {
+    return options.path == '/api/v1/auth/refresh-token';
   }
 
   // --------------------------------------------------
@@ -269,10 +254,16 @@ class AppConfig {
   static void _startTokenRefreshTimer() {
     _refreshTimer?.cancel();
 
+    // Proactively refresh every 13 minutes (access token expires at 15m).
+    // This keeps the access token alive for users actively using the app.
     _refreshTimer = Timer.periodic(
-      const Duration(minutes: 5),
-          (_) async {
-        await _refreshAccessToken();
+      const Duration(minutes: 13),
+      (_) async {
+        // Only attempt if a refresh token is actually stored.
+        final hasToken =
+            await authLocalDataSource.getRefreshToken() != null;
+        if (!hasToken) return;
+        await _doRefreshTokens();
       },
     );
   }

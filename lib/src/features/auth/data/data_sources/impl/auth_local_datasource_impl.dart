@@ -232,6 +232,17 @@ class AuthLocalDataSourceImpl
   }
 
   @override
+  Future<void> updateTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    await secureStorage.saveTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
+  }
+
+  @override
   Future<void> clearSession() async {
     await database.transaction(() async {
       await database

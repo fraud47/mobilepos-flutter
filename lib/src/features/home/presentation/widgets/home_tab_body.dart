@@ -11,7 +11,8 @@ class HomeTabBody extends StatelessWidget {
   const HomeTabBody({
     super.key,
     required this.state,
-    required this.onNewSale,
+    required this.onCheckout,
+    required this.onBackToCounter,
     required this.onProductSelected,
     required this.onClearCart,
     required this.onIncrementProduct,
@@ -21,7 +22,8 @@ class HomeTabBody extends StatelessWidget {
   });
 
   final HomeState state;
-  final VoidCallback onNewSale;
+  final VoidCallback onCheckout;
+  final VoidCallback onBackToCounter;
   final ValueChanged<InventoryItem> onProductSelected;
   final VoidCallback onClearCart;
   final ValueChanged<InventoryItem> onIncrementProduct;
@@ -32,17 +34,23 @@ class HomeTabBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state.selectedTab) {
-      HomeTab.counter => state.hasCartItems
+      HomeTab.counter => (state.hasCartItems && state.isCheckoutView)
           ? CheckoutPage(
               state: state,
-              onNewSale: onNewSale,
+              onNewSale: onBackToCounter,
               onClearCart: onClearCart,
               onIncrementProduct: onIncrementProduct,
               onDecrementProduct: onDecrementProduct,
               onRemoveProduct: onRemoveProduct,
               onQuantityChanged: onQuantityChanged,
             )
-          : CounterHomeView(onNewSale: onNewSale),
+          : CounterHomeView(
+              onNewSale: onCheckout,
+              onProductSelected: onProductSelected,
+              onIncrementProduct: onIncrementProduct,
+              onDecrementProduct: onDecrementProduct,
+              onRemoveProduct: onRemoveProduct,
+            ),
       HomeTab.items => ItemsPage(onProductSelected: onProductSelected),
       HomeTab.reports => const ReportsPage(),
     };

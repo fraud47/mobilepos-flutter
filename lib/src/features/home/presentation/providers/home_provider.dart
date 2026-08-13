@@ -20,6 +20,8 @@ class HomeState {
   final String itemSearchQuery;
   final bool isItemSearchVisible;
   final bool isItemsGridView;
+  final String counterSearchQuery;
+  final bool isCheckoutView;
 
   const HomeState({
     this.selectedTab = HomeTab.counter,
@@ -27,6 +29,8 @@ class HomeState {
     this.itemSearchQuery = '',
     this.isItemSearchVisible = false,
     this.isItemsGridView = true,
+    this.counterSearchQuery = '',
+    this.isCheckoutView = false,
   });
 
   bool get hasCartItems => cartItems.isNotEmpty;
@@ -49,11 +53,8 @@ class HomeState {
         return item.quantity;
       }
     }
-
     return 0;
   }
-
-
 
   HomeState copyWith({
     HomeTab? selectedTab,
@@ -61,6 +62,8 @@ class HomeState {
     String? itemSearchQuery,
     bool? isItemSearchVisible,
     bool? isItemsGridView,
+    String? counterSearchQuery,
+    bool? isCheckoutView,
   }) {
     return HomeState(
       selectedTab: selectedTab ?? this.selectedTab,
@@ -68,6 +71,8 @@ class HomeState {
       itemSearchQuery: itemSearchQuery ?? this.itemSearchQuery,
       isItemSearchVisible: isItemSearchVisible ?? this.isItemSearchVisible,
       isItemsGridView: isItemsGridView ?? this.isItemsGridView,
+      counterSearchQuery: counterSearchQuery ?? this.counterSearchQuery,
+      isCheckoutView: isCheckoutView ?? this.isCheckoutView,
     );
   }
 }
@@ -92,15 +97,32 @@ class HomeController extends StateNotifier<HomeState> {
   HomeController() : super(const HomeState());
 
   void selectTab(HomeTab tab) {
-    state = state.copyWith(selectedTab: tab);
+    state = state.copyWith(selectedTab: tab, isCheckoutView: false);
   }
 
   void startNewSale() {
-    state = state.copyWith(selectedTab: HomeTab.items);
+    state = state.copyWith(
+      selectedTab: HomeTab.items,
+      isCheckoutView: false,
+    );
+  }
+
+  void proceedToCheckout() {
+    if (state.hasCartItems) {
+      state = state.copyWith(isCheckoutView: true);
+    }
+  }
+
+  void backToCounter() {
+    state = state.copyWith(isCheckoutView: false);
   }
 
   void setItemSearchQuery(String query) {
     state = state.copyWith(itemSearchQuery: query);
+  }
+
+  void setCounterSearchQuery(String query) {
+    state = state.copyWith(counterSearchQuery: query);
   }
 
   void toggleItemsLayout() {
@@ -200,7 +222,10 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   void clearCart() {
-    state = state.copyWith(cartItems: const []);
+    state = state.copyWith(
+      cartItems: const [],
+      isCheckoutView: false,
+    );
   }
 }
 
@@ -246,11 +271,25 @@ final filteredProductsProvider = Provider<AsyncValue<List<InventoryItem>>>((ref)
   return asyncProducts.whenData((products) {
     final query = homeState.itemSearchQuery.trim().toLowerCase();
     if (query.isEmpty) return products;
-    
     return products.where((product) {
       return product.name.toLowerCase().contains(query) ||
           product.price.toStringAsFixed(2).contains(query) ||
           product.stock.toString().contains(query);
+    }).toList();
+  });
+});
+
+/// Products filtered for the Counter tab's inline search.
+final counterFilteredProductsProvider = Provider<AsyncValue<List<InventoryItem>>>((ref) {
+  final homeState = ref.watch(homeControllerProvider);
+  final asyncProducts = ref.watch(homeProductsProvider);
+
+  return asyncProducts.whenData((products) {
+    final query = homeState.counterSearchQuery.trim().toLowerCase();
+    if (query.isEmpty) return products;
+    return products.where((product) {
+      return product.name.toLowerCase().contains(query) ||
+          product.price.toStringAsFixed(2).contains(query);
     }).toList();
   });
 });

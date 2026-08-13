@@ -103,13 +103,17 @@ class AuthRepositoryImpl implements AuthRepository {
       if (session == null || session.refreshToken.isEmpty) {
         return const Left(ServerFailure('No refresh token available'));
       }
-      
-      final newAccessToken = await remoteDataSource.refreshAccessToken(
+
+      final result = await remoteDataSource.refreshTokens(
         refreshToken: session.refreshToken,
       );
 
-      await localDataSource.updateAccessToken(newAccessToken);
-      
+      // Save BOTH tokens — the backend rotates the refresh token on every call.
+      await localDataSource.updateTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+
       return const Right(null);
     } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));

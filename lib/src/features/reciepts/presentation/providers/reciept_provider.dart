@@ -4,22 +4,53 @@ import '../../domain/entities/reciept.dart';
 import '../../data/data_sources/impl/receipts_remote_datasource_impl.dart';
 import '../../data/repositories/receipts_repository_impl.dart';
 import '../../data/repositories/receipts_repository.dart';
+import 'receipt_date_filter_provider.dart';
 
 final receiptsRepositoryProvider = Provider<ReceiptsRepository>((ref) {
   return ReceiptsRepositoryImpl(ReceiptsRemoteDataSourceImpl.instance);
 });
 
-final receiptProvider = FutureProvider<List<Receipt>>((ref) async {
+final allReceiptsProvider = FutureProvider<List<Receipt>>((ref) async {
   final repository = ref.watch(receiptsRepositoryProvider);
   final activeBranch = ref.watch(activeBranchProvider);
-  
+
   final result = await repository.getReceipts();
-  
+
   return result.fold(
     (failure) => throw failure.message,
     (receipts) {
-      if (activeBranch == null) return receipts;
-      return receipts.where((r) => r.branchId == activeBranch.id).toList();
+      if (activeBranch != null) {
+        return receipts.where((r) => r.branchId == activeBranch.id).toList();
+      }
+      return receipts;
+    },
+  );
+});
+
+final receiptProvider = FutureProvider<List<Receipt>>((ref) async {
+  final repository = ref.watch(receiptsRepositoryProvider);
+  final activeBranch = ref.watch(activeBranchProvider);
+  final dateFilter = ref.watch(dateFilterProvider);
+
+  final result = await repository.getReceipts();
+
+  return result.fold(
+    (failure) => throw failure.message,
+    (receipts) {
+      var filtered = receipts;
+
+      // Filter by active branch
+      if (activeBranch != null) {
+        filtered = filtered.where((r) => r.branchId == activeBranch.id).toList();
+      }
+
+      // Filter by date range (fromDate inclusive, toDate inclusive end-of-day)
+      filtered = filtered.where((r) {
+        return !r.date.isBefore(dateFilter.fromDate) &&
+            !r.date.isAfter(dateFilter.toDate);
+      }).toList();
+
+      return filtered;
     },
   );
 });
