@@ -26,7 +26,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
 
   int? selectedCategoryId;
   String sellBy = "Unit";
@@ -52,7 +51,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     if (widget.item != null) {
       final item = widget.item!;
       nameController.text = item.name;
-      descriptionController.text = item.description ?? '';
       selectedCategoryId = item.categoryId;
       variants = [
         ProductVariant(
@@ -70,7 +68,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       ];
     } else {
       nameController.text = '';
-      descriptionController.text = '';
     }
   }
 
@@ -99,7 +96,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     // The backend CreateProductDto expects these fields
     final payload = {
       'name': nameController.text.trim(),
-      'description': descriptionController.text.trim(),
       if (branchId != null) 'branchId': branchId,
       'sku': firstVariant.sku.isEmpty ? 'SKU-${DateTime.now().millisecondsSinceEpoch}' : firstVariant.sku,
       if (firstVariant.barcode.isNotEmpty) 'barcode': firstVariant.barcode,
@@ -286,7 +282,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           children: [
             ProductInfoCard(
               nameController: nameController,
-              descriptionController: descriptionController,
               selectedCategoryId: selectedCategoryId,
               categories: ref.watch(categoriesProvider).maybeWhen(
                 data: (cats) => cats,

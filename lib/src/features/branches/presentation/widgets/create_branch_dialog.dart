@@ -22,18 +22,21 @@ class _CreateBranchDialogState extends ConsumerState<CreateBranchDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _codeController;
+  late final TextEditingController _addressController;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialBranch?.name ?? '');
     _codeController = TextEditingController(text: widget.initialBranch?.code ?? '');
+    _addressController = TextEditingController(text: widget.initialBranch?.address ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -42,14 +45,15 @@ class _CreateBranchDialogState extends ConsumerState<CreateBranchDialog> {
 
     final name = _nameController.text.trim();
     final code = _codeController.text.trim().isEmpty ? null : _codeController.text.trim();
+    final address = _addressController.text.trim().isEmpty ? null : _addressController.text.trim();
 
     final notifier = ref.read(createBranchControllerProvider.notifier);
     final bool success;
 
     if (widget.initialBranch != null) {
-      success = await notifier.updateBranch(widget.initialBranch!.id, name, code);
+      success = await notifier.updateBranch(widget.initialBranch!.id, name, code, address: address);
     } else {
-      success = await notifier.createBranch(name, code);
+      success = await notifier.createBranch(name, code, address: address);
     }
 
     if (success && mounted) {
@@ -112,6 +116,17 @@ class _CreateBranchDialogState extends ConsumerState<CreateBranchDialog> {
                 controller: _codeController,
                 decoration: InputDecoration(
                   labelText: 'Branch Code (Optional)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+                enabled: !isLoading,
+              ),
+              SizedBox(height: 16.h),
+              TextFormField(
+                controller: _addressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: 'Branch Address (Optional)',
+                  hintText: 'e.g. 123 Main St, Suite 100',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
                 enabled: !isLoading,

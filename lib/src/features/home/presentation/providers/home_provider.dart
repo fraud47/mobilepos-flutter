@@ -1,6 +1,7 @@
 import 'package:mobilepos/src/features/inventory/domain/entities/inventory_item.dart';
 import 'package:mobilepos/src/imports/packages_imports.dart';
 import 'package:mobilepos/src/features/branches/presentation/providers/branch_provider.dart';
+import 'package:mobilepos/src/core/sync/offline_sync_service.dart';
 
 import '../../../inventory/domain/entities/wholesale_item.dart';
 import 'package:mobilepos/src/features/inventory/data/data_sources/impl/inventory_remote_datasource_impl.dart';
@@ -254,13 +255,26 @@ final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
 });
 
 final homeProductsProvider = FutureProvider<List<InventoryItem>>((ref) async {
+  final syncService = ref.watch(offlineSyncServiceProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
   final activeBranch = ref.watch(activeBranchProvider);
+  
   final result = await repository.getInventory(branchId: activeBranch?.id);
   
   return result.fold(
-    (failure) => throw failure.message,
-    (inventory) => inventory,
+    (failure) async {
+      // Fallback to local SQLite cache if offline or remote error occurs
+      final cached = await syncService.getCachedProducts();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+      throw failure.message;
+    },
+    (inventory) {
+      // Automatically cache fresh products locally in SQLite
+      syncService.cacheProductsLocally(inventory);
+      return inventory;
+    },
   );
 });
 

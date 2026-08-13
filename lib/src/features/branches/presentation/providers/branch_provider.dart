@@ -56,7 +56,7 @@ class CreateBranchController extends StateNotifier<AsyncValue<void>> {
 
   CreateBranchController(this._repository, this._ref) : super(const AsyncData(null));
 
-  Future<bool> createBranch(String name, String? code) async {
+  Future<bool> createBranch(String name, String? code, {String? address}) async {
     state = const AsyncLoading();
 
     final session = _ref.read(sessionProvider);
@@ -66,7 +66,7 @@ class CreateBranchController extends StateNotifier<AsyncValue<void>> {
     }
 
     final tenantId = session.tenant!.id;
-    final dto = CreateBranchDto(name: name, code: code);
+    final dto = CreateBranchDto(name: name, code: code, address: address);
 
     final result = await _repository.createBranch(tenantId, dto);
 
@@ -84,9 +84,9 @@ class CreateBranchController extends StateNotifier<AsyncValue<void>> {
     );
   }
 
-  Future<bool> updateBranch(int branchId, String name, String? code) async {
+  Future<bool> updateBranch(int branchId, String name, String? code, {String? address}) async {
     state = const AsyncLoading();
-    final dto = CreateBranchDto(name: name, code: code);
+    final dto = CreateBranchDto(name: name, code: code, address: address);
     final result = await _repository.updateBranch(branchId, dto);
 
     return result.fold(

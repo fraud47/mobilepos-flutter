@@ -7,7 +7,6 @@ class ProductInfoCard extends StatelessWidget {
   const ProductInfoCard({
     super.key,
     required this.nameController,
-    required this.descriptionController,
     required this.selectedCategoryId,
     required this.categories,
     required this.sellBy,
@@ -17,7 +16,6 @@ class ProductInfoCard extends StatelessWidget {
   });
 
   final TextEditingController nameController;
-  final TextEditingController descriptionController;
 
   final int? selectedCategoryId;
   final List<ProductCategory> categories;
@@ -65,7 +63,7 @@ class ProductInfoCard extends StatelessWidget {
             SizedBox(height: 6.h),
             DropdownButtonFormField<int?>(
               icon: const Icon(FlutterRemix.arrow_down_s_line),
-              value: categories.any((c) => c.id == selectedCategoryId) ? selectedCategoryId : null,
+              initialValue: categories.any((c) => c.id == selectedCategoryId) ? selectedCategoryId : null,
               decoration: _decoration("Select Category"),
               items: [
                 const DropdownMenuItem<int?>(
@@ -88,28 +86,28 @@ class ProductInfoCard extends StatelessWidget {
         SizedBox(height: 14.h),
         _sectionCard(
           children: [
-            _title("Sell By"),
+            _title("Unit / Sell By"),
             SizedBox(height: 10.h),
             DropdownButtonFormField<String>(
-              value: sellBy,
+              initialValue: sellBy,
               icon: const Icon(FlutterRemix.arrow_down_s_line),
               decoration: _decoration(""),
               items: const [
                 DropdownMenuItem(
                   value: "Unit",
-                  child: Text("Sell by Unit"),
+                  child: Text("Sell by Unit (Piece)"),
                 ),
                 DropdownMenuItem(
                   value: "Weight",
-                  child: Text("Sell by Weight"),
+                  child: Text("Sell by Weight (kg)"),
                 ),
                 DropdownMenuItem(
                   value: "Length",
-                  child: Text("Sell by Length"),
+                  child: Text("Sell by Length (m)"),
                 ),
                 DropdownMenuItem(
                   value: "Volume",
-                  child: Text("Sell by Volume"),
+                  child: Text("Sell by Volume (L)"),
                 ),
               ],
               onChanged: (value) {
@@ -117,20 +115,6 @@ class ProductInfoCard extends StatelessWidget {
                   onSellByChanged(value);
                 }
               },
-            ),
-          ],
-        ),
-        SizedBox(height: 14.h),
-        _sectionCard(
-          children: [
-            _title("Description"),
-            SizedBox(height: 10.h),
-            TextFormField(
-              controller: descriptionController,
-              maxLines: 4,
-              decoration: _decoration(
-                "Product Description",
-              ),
             ),
           ],
         ),

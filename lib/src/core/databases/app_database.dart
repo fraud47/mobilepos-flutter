@@ -7,6 +7,9 @@ import 'package:path_provider/path_provider.dart';
 
 import 'tables/auth_tables.dart';
 import 'tables/unit_of_measure.dart';
+import 'tables/products_table.dart';
+import 'tables/offline_sales_table.dart';
+import 'tables/sync_queue_table.dart';
 
 part 'app_database.g.dart';
 
@@ -17,13 +20,16 @@ part 'app_database.g.dart';
     AuthCompanies,
     AuthPermissions,
     UnitsOfMeasure,
+    LocalProducts,
+    OfflineSales,
+    SyncQueue,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -75,6 +81,16 @@ class AppDatabase extends _$AppDatabase {
           await _migrateUnitsOfMeasure(
             m,
           );
+        }
+
+        // -----------------------------------------
+        // VERSION 4 -> VERSION 5
+        // Add offline POS tables: LocalProducts, OfflineSales, SyncQueue
+        // -----------------------------------------
+        if (from < 5) {
+          await m.createTable(localProducts);
+          await m.createTable(offlineSales);
+          await m.createTable(syncQueue);
         }
       },
     );

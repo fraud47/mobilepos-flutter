@@ -6,6 +6,7 @@ class BranchModel extends Branch {
     required super.tenantId,
     required super.name,
     super.code,
+    super.address,
     required super.isActive,
   });
 
@@ -15,6 +16,7 @@ class BranchModel extends Branch {
       tenantId: json['tenantId'] as int,
       name: json['name'] as String,
       code: json['code'] as String?,
+      address: json['address'] as String?,
       isActive: json['isActive'] as bool? ?? true,
     );
   }
@@ -25,6 +27,7 @@ class BranchModel extends Branch {
       'tenantId': tenantId,
       'name': name,
       'code': code,
+      'address': address,
       'isActive': isActive,
     };
   }

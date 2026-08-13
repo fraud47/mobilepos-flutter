@@ -5,6 +5,7 @@ class Branch extends Equatable {
   final int tenantId;
   final String name;
   final String? code;
+  final String? address;
   final bool isActive;
 
   const Branch({
@@ -12,9 +13,10 @@ class Branch extends Equatable {
     required this.tenantId,
     required this.name,
     this.code,
+    this.address,
     required this.isActive,
   });
 
   @override
-  List<Object?> get props => [id, tenantId, name, code, isActive];
+  List<Object?> get props => [id, tenantId, name, code, address, isActive];
 }

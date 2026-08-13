@@ -38,8 +38,36 @@ class BranchesScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final branch = branches[index];
               return ListTile(
-                title: Text(branch.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('Code: ${branch.code ?? 'N/A'}'),
+                title: Text(branch.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp)),
+                subtitle: Padding(
+                  padding: EdgeInsets.only(top: 3.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Code: ${branch.code ?? 'N/A'}',
+                        style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                      ),
+                      if (branch.address != null && branch.address!.isNotEmpty) ...[
+                        SizedBox(height: 3.h),
+                        Row(
+                          children: [
+                            Icon(FlutterRemix.map_pin_line, size: 13.sp, color: Colors.grey.shade500),
+                            SizedBox(width: 4.w),
+                            Expanded(
+                              child: Text(
+                                branch.address!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 11.5.sp, color: Colors.grey.shade600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
